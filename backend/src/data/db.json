@@ -1,0 +1,868 @@
+{
+  "users": [
+    {
+      "id": "u1",
+      "name": "Alex Johnson",
+      "email": "alex@example.com",
+      "password": "password123",
+      "phone": "+1 555-0100",
+      "avatar": "https://randomuser.me/api/portraits/men/1.jpg",
+      "roles": [
+        "buyer",
+        "owner"
+      ],
+      "createdAt": "2026-01-15T00:00:00Z"
+    },
+    {
+      "id": "u2",
+      "name": "Sarah Williams",
+      "email": "sarah@example.com",
+      "password": "password123",
+      "phone": "+1 555-0200",
+      "avatar": "https://randomuser.me/api/portraits/women/2.jpg",
+      "roles": [
+        "tenant"
+      ],
+      "createdAt": "2026-03-10T00:00:00Z"
+    },
+    {
+      "id": "ueb35e420",
+      "name": "Aakash",
+      "email": "aakash@gmail.com",
+      "password": "aakash1234",
+      "phone": "",
+      "avatar": "https://ui-avatars.com/api/?name=Aakash&background=0F4C75&color=fff",
+      "roles": [
+        "buyer",
+        "owner"
+      ],
+      "createdAt": "2026-09-22T10:21:10.656Z"
+    }
+  ],
+  "properties": [
+    {
+      "id": "p1",
+      "title": "Luxury Skyline Penthouse",
+      "description": "Stunning penthouse with panoramic city views, floor-to-ceiling windows, a private rooftop terrace, and top-of-the-line finishes throughout.",
+      "price": 2500000,
+      "priceUnit": "total",
+      "type": "penthouse",
+      "status": "available",
+      "bedrooms": 4,
+      "bathrooms": 3,
+      "area": 3200,
+      "areaUnit": "sqft",
+      "address": "1200 Park Avenue",
+      "city": "New York",
+      "state": "NY",
+      "zipCode": "10128",
+      "images": [
+        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+        "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800"
+      ],
+      "amenities": [
+        "Rooftop Terrace",
+        "Concierge",
+        "Gym",
+        "Pool",
+        "Parking",
+        "Smart Home"
+      ],
+      "rating": 4.9,
+      "reviewCount": 47,
+      "isFeatured": true,
+      "agent": {
+        "id": "a1",
+        "name": "Sarah Mitchell",
+        "avatar": "https://randomuser.me/api/portraits/women/44.jpg",
+        "phone": "+1 212-555-0101",
+        "email": "sarah.m@realapp.com",
+        "rating": 4.9,
+        "propertiesCount": 58
+      },
+      "yearBuilt": 2022,
+      "parkingSpaces": 2
+    },
+    {
+      "id": "p2",
+      "title": "Modern Beachfront Villa",
+      "description": "A breathtaking beachfront villa featuring an infinity pool, open-plan living spaces, and direct access to a private beach.",
+      "price": 4800000,
+      "priceUnit": "total",
+      "type": "villa",
+      "status": "available",
+      "bedrooms": 5,
+      "bathrooms": 4,
+      "area": 4500,
+      "areaUnit": "sqft",
+      "address": "88 Ocean Drive",
+      "city": "Miami",
+      "state": "FL",
+      "zipCode": "33139",
+      "images": [
+        "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800",
+        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800",
+        "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800"
+      ],
+      "amenities": [
+        "Infinity Pool",
+        "Beach Access",
+        "Home Theater",
+        "Wine Cellar",
+        "Smart Home",
+        "Garden"
+      ],
+      "rating": 4.8,
+      "reviewCount": 32,
+      "isFeatured": true,
+      "agent": {
+        "id": "a2",
+        "name": "James Rodriguez",
+        "avatar": "https://randomuser.me/api/portraits/men/32.jpg",
+        "phone": "+1 305-555-0202",
+        "email": "james.r@realapp.com",
+        "rating": 4.8,
+        "propertiesCount": 42
+      },
+      "yearBuilt": 2023,
+      "parkingSpaces": 3
+    },
+    {
+      "id": "p3",
+      "title": "Downtown Loft Apartment",
+      "description": "Chic industrial loft with exposed brick, high ceilings, and an open layout in the heart of downtown.",
+      "price": 3500,
+      "priceUnit": "month",
+      "type": "apartment",
+      "status": "available",
+      "bedrooms": 2,
+      "bathrooms": 2,
+      "area": 1400,
+      "areaUnit": "sqft",
+      "address": "456 Main Street",
+      "city": "Austin",
+      "state": "TX",
+      "zipCode": "73301",
+      "images": [
+        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
+        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800",
+        "https://images.unsplash.com/photo-1554995207-c18c203602cb?w=800"
+      ],
+      "amenities": [
+        "Gym",
+        "Rooftop Lounge",
+        "Parking",
+        "Pet Friendly",
+        "In-Unit Laundry"
+      ],
+      "rating": 4.6,
+      "reviewCount": 89,
+      "isFeatured": false,
+      "agent": {
+        "id": "a3",
+        "name": "Emily Chen",
+        "avatar": "https://randomuser.me/api/portraits/women/65.jpg",
+        "phone": "+1 512-555-0303",
+        "email": "emily.c@realapp.com",
+        "rating": 4.7,
+        "propertiesCount": 35
+      },
+      "yearBuilt": 2019,
+      "parkingSpaces": 1
+    },
+    {
+      "id": "p4",
+      "title": "Elegant Colonial House",
+      "description": "A beautifully restored colonial home with modern amenities, a wraparound porch, and a spacious backyard.",
+      "price": 1200000,
+      "priceUnit": "total",
+      "type": "house",
+      "status": "available",
+      "bedrooms": 4,
+      "bathrooms": 3,
+      "area": 2800,
+      "areaUnit": "sqft",
+      "address": "789 Elm Street",
+      "city": "Charleston",
+      "state": "SC",
+      "zipCode": "29401",
+      "images": [
+        "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800",
+        "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800",
+        "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800"
+      ],
+      "amenities": [
+        "Garden",
+        "Fireplace",
+        "Porch",
+        "Garage",
+        "Hardwood Floors",
+        "Central AC"
+      ],
+      "rating": 4.7,
+      "reviewCount": 28,
+      "isFeatured": true,
+      "agent": {
+        "id": "a1",
+        "name": "Sarah Mitchell",
+        "avatar": "https://randomuser.me/api/portraits/women/44.jpg",
+        "phone": "+1 212-555-0101",
+        "email": "sarah.m@realapp.com",
+        "rating": 4.9,
+        "propertiesCount": 58
+      },
+      "yearBuilt": 1920,
+      "parkingSpaces": 2
+    },
+    {
+      "id": "p5",
+      "title": "Hillside Luxury Condo",
+      "description": "A sleek, modern condo perched on the hillside with sweeping views of the valley.",
+      "price": 850000,
+      "priceUnit": "total",
+      "type": "condo",
+      "status": "available",
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "area": 1800,
+      "areaUnit": "sqft",
+      "address": "321 Hilltop Lane",
+      "city": "Los Angeles",
+      "state": "CA",
+      "zipCode": "90028",
+      "images": [
+        "https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=800",
+        "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800",
+        "https://images.unsplash.com/photo-1600585154363-67eb9e2e2099?w=800"
+      ],
+      "amenities": [
+        "Pool",
+        "Gym",
+        "Balcony",
+        "Concierge",
+        "Parking",
+        "Spa"
+      ],
+      "rating": 4.5,
+      "reviewCount": 56,
+      "isFeatured": false,
+      "agent": {
+        "id": "a4",
+        "name": "Michael Park",
+        "avatar": "https://randomuser.me/api/portraits/men/75.jpg",
+        "phone": "+1 310-555-0404",
+        "email": "michael.p@realapp.com",
+        "rating": 4.6,
+        "propertiesCount": 67
+      },
+      "yearBuilt": 2021,
+      "parkingSpaces": 2
+    },
+    {
+      "id": "p6",
+      "title": "Waterfront Studio Apartment",
+      "description": "Compact yet elegant studio with stunning water views and a fully equipped kitchen.",
+      "price": 2200,
+      "priceUnit": "month",
+      "type": "apartment",
+      "status": "available",
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "area": 650,
+      "areaUnit": "sqft",
+      "address": "55 Harbor Blvd",
+      "city": "San Francisco",
+      "state": "CA",
+      "zipCode": "94111",
+      "images": [
+        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800",
+        "https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=800",
+        "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800"
+      ],
+      "amenities": [
+        "Water View",
+        "Gym",
+        "Doorman",
+        "Laundry",
+        "Bike Storage"
+      ],
+      "rating": 4.4,
+      "reviewCount": 112,
+      "isFeatured": false,
+      "agent": {
+        "id": "a2",
+        "name": "James Rodriguez",
+        "avatar": "https://randomuser.me/api/portraits/men/32.jpg",
+        "phone": "+1 305-555-0202",
+        "email": "james.r@realapp.com",
+        "rating": 4.8,
+        "propertiesCount": 42
+      },
+      "yearBuilt": 2020,
+      "parkingSpaces": 0
+    }
+  ],
+  "bookings": [
+    {
+      "id": "b-6849625f",
+      "userId": "u1",
+      "propertyId": "p1",
+      "date": "2026-09-25",
+      "time": "10:00 AM",
+      "notes": "First visit",
+      "status": "confirmed",
+      "createdAt": "2026-09-22T10:11:48.508Z",
+      "mode": "owner"
+    },
+    {
+      "id": "b-83d719cd",
+      "userId": "ueb35e420",
+      "propertyId": "p1",
+      "date": "2026-09-23",
+      "time": "1:00 PM",
+      "notes": "",
+      "status": "cancelled",
+      "createdAt": "2026-09-22T10:27:25.242Z",
+      "mode": "owner"
+    },
+    {
+      "id": "b-2cf31d72",
+      "userId": "ueb35e420",
+      "propertyId": "p2",
+      "date": "2026-09-25",
+      "time": "3:00 PM",
+      "notes": "",
+      "status": "cancelled",
+      "createdAt": "2026-09-22T10:43:12.509Z",
+      "mode": "owner"
+    },
+    {
+      "id": "b-83f10a5d",
+      "userId": "ueb35e420",
+      "propertyId": "p4",
+      "date": "2026-09-25",
+      "time": "11:00 AM",
+      "notes": "",
+      "status": "confirmed",
+      "createdAt": "2026-09-22T10:53:11.631Z",
+      "mode": "owner"
+    },
+    {
+      "id": "b-5b1dfe50",
+      "userId": "ueb35e420",
+      "propertyId": "p1",
+      "date": "2026-09-27",
+      "time": "10:00 AM",
+      "notes": "",
+      "mode": "owner",
+      "status": "confirmed",
+      "createdAt": "2026-09-23T06:01:40.166Z"
+    }
+  ],
+  "favorites": {
+    "u1": [
+      "p2",
+      "p5",
+      "p1"
+    ],
+    "u2": [],
+    "ueb35e420": []
+  },
+  "interiors": [
+    {
+      "id": "i1",
+      "title": "Minimalist Scandinavian Living",
+      "category": "living-room",
+      "description": "A serene living space featuring clean lines, neutral tones, and natural materials.",
+      "images": [
+        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800"
+      ],
+      "designer": "Anna Johansson",
+      "style": "Scandinavian",
+      "tags": [
+        "minimalist",
+        "neutral",
+        "cozy"
+      ],
+      "likes": 342,
+      "isLiked": false
+    },
+    {
+      "id": "i2",
+      "title": "Industrial Modern Kitchen",
+      "category": "kitchen",
+      "description": "Bold industrial kitchen with exposed brick, stainless steel, and a massive island.",
+      "images": [
+        "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800"
+      ],
+      "designer": "Marco Bellini",
+      "style": "Industrial",
+      "tags": [
+        "industrial",
+        "modern",
+        "open-plan"
+      ],
+      "likes": 287
+    },
+    {
+      "id": "i3",
+      "title": "Coastal Retreat Bedroom",
+      "category": "bedroom",
+      "description": "A calming bedroom inspired by the coast with soft blues and natural textures.",
+      "images": [
+        "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800"
+      ],
+      "designer": "Olivia West",
+      "style": "Coastal",
+      "tags": [
+        "coastal",
+        "relaxing",
+        "blue"
+      ],
+      "likes": 415
+    },
+    {
+      "id": "i4",
+      "title": "Luxe Marble Bathroom",
+      "category": "bathroom",
+      "description": "An opulent bathroom clad in Calacatta marble with a freestanding tub and gold fixtures.",
+      "images": [
+        "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=800"
+      ],
+      "designer": "Laurent Dubois",
+      "style": "Luxury",
+      "tags": [
+        "luxury",
+        "marble",
+        "spa"
+      ],
+      "likes": 523
+    },
+    {
+      "id": "i5",
+      "title": "Mid-Century Home Office",
+      "category": "office",
+      "description": "A stylish home office blending mid-century modern furniture with contemporary tech.",
+      "images": [
+        "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800"
+      ],
+      "designer": "David Kim",
+      "style": "Mid-Century Modern",
+      "tags": [
+        "mid-century",
+        "workspace",
+        "productive"
+      ],
+      "likes": 198
+    },
+    {
+      "id": "i6",
+      "title": "Mediterranean Outdoor Lounge",
+      "category": "outdoor",
+      "description": "A warm Mediterranean-inspired outdoor area with terracotta tiles and lush greenery.",
+      "images": [
+        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800"
+      ],
+      "designer": "Sofia Moreno",
+      "style": "Mediterranean",
+      "tags": [
+        "outdoor",
+        "mediterranean",
+        "lounge"
+      ],
+      "likes": 276
+    },
+    {
+      "id": "i7",
+      "title": "Japanese Zen Living Room",
+      "category": "living-room",
+      "description": "A tranquil living space inspired by Japanese aesthetics with low-profile furniture.",
+      "images": [
+        "https://images.unsplash.com/photo-1600210491369-e753d80a41f3?w=800"
+      ],
+      "designer": "Yuki Tanaka",
+      "style": "Japandi",
+      "tags": [
+        "zen",
+        "japanese",
+        "minimal"
+      ],
+      "likes": 390,
+      "isLiked": true
+    },
+    {
+      "id": "i8",
+      "title": "Bohemian Eclectic Bedroom",
+      "category": "bedroom",
+      "description": "A vibrant bedroom layered with patterns, textures, and global influences.",
+      "images": [
+        "https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=800"
+      ],
+      "designer": "Priya Sharma",
+      "style": "Bohemian",
+      "tags": [
+        "bohemian",
+        "eclectic",
+        "colorful"
+      ],
+      "likes": 456
+    }
+  ],
+  "rentals": [
+    {
+      "id": "ten-1",
+      "state": "onboarding",
+      "rent": 35000,
+      "deposit": 210000,
+      "maintenanceSpendLimit": 5000,
+      "ownerApproval": false,
+      "depositReceived": false,
+      "depositSettled": false,
+      "duesCleared": false,
+      "createdAt": "2026-09-01",
+      "property": {
+        "id": "rp1",
+        "type": "residential",
+        "unitNo": "A-1204",
+        "tower": "Tower A",
+        "floor": 12,
+        "carpetArea": 1450,
+        "facing": "East",
+        "address": "Prestige Lakeside Habitat",
+        "locality": "Varthur",
+        "city": "Bangalore",
+        "image": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800"
+      },
+      "owner": {
+        "id": "o1",
+        "name": "Rajesh Sharma",
+        "phone": "+91 98765 43210",
+        "email": "rajesh.sharma@gmail.com",
+        "residencyStatus": "nri",
+        "avatar": "https://randomuser.me/api/portraits/men/45.jpg"
+      },
+      "documents": [
+        {
+          "id": "d1",
+          "type": "poa",
+          "fileName": "POA_Rajesh.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-09-01"
+        },
+        {
+          "id": "d2",
+          "type": "ownership_deed",
+          "fileName": "Sale_Deed_A1204.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-09-01"
+        }
+      ],
+      "inspections": [],
+      "ledger": [],
+      "userId": "u1"
+    },
+    {
+      "id": "ten-2",
+      "state": "marketing",
+      "rent": 22000,
+      "deposit": 132000,
+      "maintenanceSpendLimit": 3000,
+      "ownerApproval": false,
+      "depositReceived": false,
+      "depositSettled": false,
+      "duesCleared": false,
+      "createdAt": "2026-07-15",
+      "property": {
+        "id": "rp2",
+        "type": "residential",
+        "unitNo": "B-305",
+        "block": "Block B",
+        "floor": 3,
+        "carpetArea": 980,
+        "facing": "North",
+        "address": "My Home Bhooja",
+        "locality": "Madhapur",
+        "city": "Hyderabad",
+        "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800"
+      },
+      "owner": {
+        "id": "o2",
+        "name": "Priya Reddy",
+        "phone": "+91 87654 32109",
+        "email": "priya.reddy@outlook.com",
+        "residencyStatus": "resident",
+        "avatar": "https://randomuser.me/api/portraits/women/28.jpg"
+      },
+      "documents": [
+        {
+          "id": "d3",
+          "type": "poa",
+          "fileName": "POA_Priya.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-07-15"
+        },
+        {
+          "id": "d4",
+          "type": "ownership_deed",
+          "fileName": "Allotment_B305.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-07-15"
+        },
+        {
+          "id": "d5",
+          "type": "society_noc",
+          "fileName": "NOC_Bhooja.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-07-16"
+        },
+        {
+          "id": "d6",
+          "type": "baseline_photos",
+          "fileName": "Photos_B305.zip",
+          "isOnFile": true,
+          "createdAt": "2026-07-16"
+        }
+      ],
+      "inspections": [],
+      "ledger": [],
+      "userId": "u1"
+    },
+    {
+      "id": "ten-3",
+      "state": "occupied",
+      "rent": 28000,
+      "deposit": 168000,
+      "maintenanceSpendLimit": 5000,
+      "startDate": "2026-04-01",
+      "endDate": "2027-03-31",
+      "escalationPct": 5,
+      "ownerApproval": true,
+      "depositReceived": true,
+      "depositSettled": false,
+      "duesCleared": false,
+      "createdAt": "2026-03-20",
+      "property": {
+        "id": "rp3",
+        "type": "residential",
+        "unitNo": "402",
+        "floor": 4,
+        "carpetArea": 1200,
+        "facing": "South",
+        "address": "Sobha Dream Acres",
+        "locality": "Panathur",
+        "city": "Bangalore",
+        "image": "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800"
+      },
+      "owner": {
+        "id": "o3",
+        "name": "Ananya Iyer",
+        "phone": "+91 65432 10987",
+        "email": "ananya.iyer@gmail.com",
+        "residencyStatus": "resident",
+        "avatar": "https://randomuser.me/api/portraits/women/55.jpg"
+      },
+      "tenant": {
+        "id": "t1",
+        "name": "TechStart Solutions Pvt Ltd",
+        "phone": "+91 88776 65544",
+        "email": "admin@techstart.in",
+        "residencyStatus": "resident"
+      },
+      "documents": [
+        {
+          "id": "d7",
+          "type": "agreement",
+          "fileName": "Agreement_402.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-03-25"
+        },
+        {
+          "id": "d8",
+          "type": "police_verification",
+          "fileName": "PV_TechStart.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-03-28"
+        },
+        {
+          "id": "d9",
+          "type": "move_in_inventory",
+          "fileName": "MoveIn_402.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-04-01"
+        }
+      ],
+      "inspections": [
+        {
+          "id": "insp-1",
+          "type": "movein",
+          "conductedBy": "Field Team",
+          "conductedAt": "2026-04-01",
+          "items": [
+            {
+              "id": "ii-1",
+              "room": "Living Room",
+              "item": "Flooring",
+              "condition": "good"
+            },
+            {
+              "id": "ii-2",
+              "room": "Kitchen",
+              "item": "Countertop",
+              "condition": "good"
+            }
+          ]
+        }
+      ],
+      "ledger": [
+        {
+          "id": "le-1",
+          "date": "2026-04-05",
+          "direction": "in",
+          "amount": 28000,
+          "category": "rent",
+          "description": "April 2026 rent"
+        },
+        {
+          "id": "le-2",
+          "date": "2026-05-03",
+          "direction": "in",
+          "amount": 28000,
+          "category": "rent",
+          "description": "May 2026 rent"
+        },
+        {
+          "id": "le-3",
+          "date": "2026-05-12",
+          "direction": "out",
+          "amount": 4500,
+          "category": "maintenance",
+          "description": "Plumbing repair"
+        },
+        {
+          "id": "le-4",
+          "date": "2026-06-04",
+          "direction": "in",
+          "amount": 28000,
+          "category": "rent",
+          "description": "June 2026 rent"
+        }
+      ],
+      "userId": "u1"
+    },
+    {
+      "id": "ten-1790143629641",
+      "userId": "ueb35e420",
+      "state": "agreement",
+      "rent": 23000,
+      "deposit": 138000,
+      "maintenanceSpendLimit": 5000,
+      "ownerApproval": true,
+      "depositReceived": true,
+      "depositSettled": false,
+      "duesCleared": false,
+      "createdAt": "2026-09-23",
+      "property": {
+        "id": "rp-1790143629641",
+        "type": "residential",
+        "unitNo": "A-129",
+        "tower": "sdvs",
+        "floor": 0,
+        "carpetArea": 0,
+        "address": "Wvwb gdbv",
+        "locality": "Hyd",
+        "city": "Hyd",
+        "image": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800"
+      },
+      "owner": {
+        "id": "ueb35e420",
+        "name": "Aakash",
+        "phone": "",
+        "email": "aakash@gmail.com",
+        "residencyStatus": "resident",
+        "avatar": "https://ui-avatars.com/api/?name=Aakash&background=0F4C75&color=fff"
+      },
+      "documents": [
+        {
+          "id": "d-1790143683182",
+          "type": "ownership_deed",
+          "fileName": "Ownership_Deed.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-09-23"
+        },
+        {
+          "id": "d-1790143684823",
+          "type": "society_noc",
+          "fileName": "Society_NOC.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-09-23"
+        },
+        {
+          "id": "d-1790143699693",
+          "type": "poa",
+          "fileName": "POA_Document.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-09-23"
+        },
+        {
+          "id": "d-1790143702123",
+          "type": "baseline_photos",
+          "fileName": "Baseline_Photos.zip",
+          "isOnFile": true,
+          "createdAt": "2026-09-23"
+        },
+        {
+          "id": "d-1790143821522",
+          "type": "screening_report",
+          "fileName": "Screening_Report.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-09-23"
+        },
+        {
+          "id": "d-1790143877771",
+          "type": "agreement",
+          "fileName": "Rental_Agreement.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-09-23"
+        },
+        {
+          "id": "d-1790143882805",
+          "type": "police_verification",
+          "fileName": "Police_Verification.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-09-23"
+        },
+        {
+          "id": "d-1790143884321",
+          "type": "move_in_inventory",
+          "fileName": "MoveIn_Inventory.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-09-23"
+        },
+        {
+          "id": "d-1790143885322",
+          "type": "move_in_inventory",
+          "fileName": "MoveIn_Inventory.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-09-23"
+        },
+        {
+          "id": "d-1790143886055",
+          "type": "move_in_inventory",
+          "fileName": "MoveIn_Inventory.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-09-23"
+        },
+        {
+          "id": "d-1790143893839",
+          "type": "move_in_inventory",
+          "fileName": "MoveIn_Inventory.pdf",
+          "isOnFile": true,
+          "createdAt": "2026-09-23"
+        }
+      ],
+      "inspections": [],
+      "ledger": []
+    }
+  ]
+}

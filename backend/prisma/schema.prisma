@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Users ──
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String   @default("")
+  avatar    String   @default("")
+  roles     String[] @default(["buyer"])
+  createdAt DateTime @default(now())
+
+  bookings   Booking[]
+  rentals    Rental[]   @relation("RentalOwner")
+  favorites  Favorite[]
+
+  @@map("users")
+}
+
+// ── Properties (for sale/rent listings) ──
+model Property {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  price       Float
+  priceUnit   String   // 'month' | 'total'
+  type        String   // apartment, house, villa, condo, penthouse
+  status      String   @default("available")
+  bedrooms    Int
+  bathrooms   Int
+  area        Float
+  areaUnit    String   @default("sqft")
+  address     String
+  city        String
+  state       String
+  zipCode     String   @default("")
+  images      String[]
+  amenities   String[]
+  rating      Float    @default(0)
+  reviewCount Int      @default(0)
+  isFeatured  Boolean  @default(false)
+  yearBuilt   Int      @default(2020)
+  parkingSpaces Int    @default(0)
+
+  // Agent info stored as JSON
+  agentName     String @default("")
+  agentAvatar   String @default("")
+  agentPhone    String @default("")
+  agentEmail    String @default("")
+  agentRating   Float  @default(0)
+  agentListings Int    @default(0)
+
+  latitude  Float @default(0)
+  longitude Float @default(0)
+
+  createdAt DateTime @default(now())
+
+  bookings  Booking[]
+  favorites Favorite[]
+
+  @@map("properties")
+}
+
+// ── Bookings ──
+model Booking {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  date       String
+  time       String
+  notes      String   @default("")
+  status     String   @default("confirmed") // confirmed, cancelled, pending
+  mode       String   @default("owner")     // owner | tenant
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@map("bookings")
+}
+
+// ── Favorites (many-to-many) ──
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([userId, propertyId])
+  @@map("favorites")
+}
+
+// ── Interior Designs ──
+model Interior {
+  id          String   @id @default(cuid())
+  title       String
+  category    String
+  description String
+  images      String[]
+  designer    String
+  style       String
+  tags        String[]
+  likes       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  interiorLikes InteriorLike[]
+
+  @@map("interiors")
+}
+
+// ── Interior Likes (per-user) ──
+model InteriorLike {
+  id         String   @id @default(cuid())
+  userId     String
+  interiorId String
+  createdAt  DateTime @default(now())
+
+  interior Interior @relation(fields: [interiorId], references: [id])
+
+  @@unique([userId, interiorId])
+  @@map("interior_likes")
+}
+
+// ── Rentals (Tenancies) ──
+model Rental {
+  id                    String   @id @default(cuid())
+  userId                String   // owner's user id
+  rentalState           String   @default("onboarding")
+  rent                  Float
+  deposit               Float
+  maintenanceSpendLimit Float    @default(0)
+  startDate             String?
+  endDate               String?
+  escalationPct         Float?
+  ownerApproval         Boolean  @default(false)
+  depositReceived       Boolean  @default(false)
+  depositSettled        Boolean  @default(false)
+  duesCleared           Boolean  @default(false)
+  createdAt             DateTime @default(now())
+
+  // Property details
+  propType      String @default("residential")
+  propUnitNo    String
+  propTower     String?
+  propBlock     String?
+  propFloor     Int    @default(0)
+  propCarpetArea Float @default(0)
+  propFacing    String?
+  propAddress   String
+  propLocality  String
+  propCity      String
+  propImage     String @default("")
+
+  // Owner info (denormalized for quick display)
+  ownerName           String
+  ownerPhone          String   @default("")
+  ownerEmail          String   @default("")
+  ownerResidencyStatus String  @default("resident")
+  ownerAvatar         String   @default("")
+
+  // Tenant info (optional)
+  tenantName           String?
+  tenantPhone          String?
+  tenantEmail          String?
+  tenantResidencyStatus String?
+  tenantAvatar         String?
+
+  user       User              @relation("RentalOwner", fields: [userId], references: [id])
+  documents  RentalDocument[]
+  inspections RentalInspection[]
+  ledger     LedgerEntry[]
+
+  @@map("rentals")
+}
+
+// ── Rental Documents ──
+model RentalDocument {
+  id        String   @id @default(cuid())
+  rentalId  String
+  type      String
+  fileName  String
+  isOnFile  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  rental Rental @relation(fields: [rentalId], references: [id])
+
+  @@map("rental_documents")
+}
+
+// ── Rental Inspections ──
+model RentalInspection {
+  id          String   @id @default(cuid())
+  rentalId    String
+  type        String   // movein, periodic, moveout
+  conductedBy String
+  conductedAt String
+  createdAt   DateTime @default(now())
+
+  rental Rental              @relation(fields: [rentalId], references: [id])
+  items  RentalInspectionItem[]
+
+  @@map("rental_inspections")
+}
+
+model RentalInspectionItem {
+  id           String @id @default(cuid())
+  inspectionId String
+  room         String
+  item         String
+  condition    String // good, fair, poor, damaged
+
+  inspection RentalInspection @relation(fields: [inspectionId], references: [id])
+
+  @@map("rental_inspection_items")
+}
+
+// ── Ledger Entries (append-only) ──
+model LedgerEntry {
+  id          String   @id @default(cuid())
+  rentalId    String
+  date        String
+  direction   String   // in | out
+  amount      Float
+  category    String
+  description String
+  createdAt   DateTime @default(now())
+
+  rental Rental @relation(fields: [rentalId], references: [id])
+
+  @@map("ledger_entries")
+}
