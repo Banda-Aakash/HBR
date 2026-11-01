@@ -9,12 +9,17 @@ import {
   Platform,
   ScrollView,
   Alert,
+  StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {FestiveScene, FestiveStrip, Logo, useStripHeight} from '../components/Arch';
+import {Button} from '../components/Button';
 import {useAuth} from '../context/AuthContext';
+import {useTheme} from '../context/ThemeContext';
 import {FEATURES} from '../config';
-import {Colors, Typography} from '../theme';
+import {Colors, Fonts, Typography} from '../theme';
 import {AuthStackParamList} from '../types';
 
 type Props = {
@@ -23,6 +28,9 @@ type Props = {
 
 export const LoginScreen: React.FC<Props> = ({navigation}) => {
   const {login, isLoading} = useAuth();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const stripHeight = useStripHeight();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,30 +52,34 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, {backgroundColor: theme.soft}]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <StatusBar barStyle="light-content" />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
         {/* ── Brand hero ── */}
-        <View style={styles.hero}>
-          <View style={styles.heroBg} />
-          <View style={styles.logoCircle}>
-            <Icon name="apartment" size={36} color={Colors.primary} />
-          </View>
-          <Text style={styles.brand}>RealApp</Text>
+        <View
+          style={[
+            styles.hero,
+            {
+              backgroundColor: theme.primary,
+              paddingTop: theme.festival ? stripHeight + 6 : insets.top + 40,
+            },
+          ]}>
+          {theme.festival ? <FestiveStrip festival={theme.festival} /> : null}
+          <Logo width={72} onDark />
+          <Text style={styles.brand}>HomeBridgeReality</Text>
           <Text style={styles.tagline}>
-            Your complete real estate companion
+            {theme.wish || 'Your complete real estate companion'}
           </Text>
+          {theme.festival ? <FestiveScene festival={theme.festival} width={176} /> : null}
         </View>
 
         {/* ── Form ── */}
-        <View style={styles.formCard}>
+        <View style={styles.form}>
           <Text style={styles.welcomeTitle}>Welcome back</Text>
-          <Text style={styles.welcomeSub}>
-            Sign in to manage properties and bookings
-          </Text>
 
           {/* Email */}
           <View style={styles.fieldGroup}>
@@ -83,7 +95,7 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
                 color={
                   focusedField === 'email'
                     ? Colors.primary
-                    : Colors.textLight
+                    : Colors.textSecondary
                 }
               />
               <TextInput
@@ -91,7 +103,7 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
                 value={email}
                 onChangeText={setEmail}
                 placeholder="you@example.com"
-                placeholderTextColor={Colors.textLight}
+                placeholderTextColor={Colors.textSecondary}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -124,7 +136,7 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
                 color={
                   focusedField === 'password'
                     ? Colors.primary
-                    : Colors.textLight
+                    : Colors.textSecondary
                 }
               />
               <TextInput
@@ -132,7 +144,7 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Enter password"
-                placeholderTextColor={Colors.textLight}
+                placeholderTextColor={Colors.textSecondary}
                 secureTextEntry={!showPassword}
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
@@ -150,30 +162,19 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
                 <Icon
                   name={showPassword ? 'visibility' : 'visibility-off'}
                   size={20}
-                  color={Colors.textLight}
+                  color={Colors.textSecondary}
                 />
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Sign In button */}
-          <TouchableOpacity
-            style={[styles.primaryBtn, isLoading && {opacity: 0.7}]}
+          <Button
+            title={isLoading ? 'Signing in...' : 'Sign in'}
             onPress={handleLogin}
             disabled={isLoading}
-            activeOpacity={0.85}
-            accessible
-            accessibilityRole="button"
-            accessibilityLabel="Sign in">
-            {isLoading ? (
-              <Text style={styles.primaryBtnText}>Signing in...</Text>
-            ) : (
-              <>
-                <Text style={styles.primaryBtnText}>Sign In</Text>
-                <Icon name="arrow-forward" size={20} color="#fff" />
-              </>
-            )}
-          </TouchableOpacity>
+            style={styles.primaryBtn}
+          />
 
           {FEATURES.socialLogin ? (
             <>
@@ -200,12 +201,13 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
         </View>
 
         {/* ── Footer ── */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account?</Text>
+        <View style={[styles.footer, {paddingBottom: Math.max(insets.bottom, 16) + 8}]}>
+          <Text style={styles.footerText}>New here?</Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('Register')}
-            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-            <Text style={styles.footerLink}> Create one</Text>
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+            accessibilityRole="button">
+            <Text style={[styles.footerLink, {color: theme.ink}]}> Create an account</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -214,151 +216,90 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: Colors.background},
+  container: {flex: 1},
   scroll: {flexGrow: 1},
 
   // Hero
-  hero: {
-    alignItems: 'center',
-    paddingTop: 72,
-    paddingBottom: 36,
-    position: 'relative',
-  },
-  heroBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: Colors.primary,
-    borderBottomLeftRadius: 36,
-    borderBottomRightRadius: 36,
-  },
-  logoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
-  },
+  hero: {alignItems: 'center', paddingBottom: 20, overflow: 'hidden'},
   brand: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#fff',
+    marginTop: 8,
+    fontFamily: Fonts.heavy,
+    fontSize: 27,
     letterSpacing: -0.5,
-    marginBottom: 4,
+    color: Colors.textInverse,
   },
   tagline: {
-    ...Typography.body,
-    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
+    fontFamily: Fonts.semibold,
+    fontSize: 16,
+    color: Colors.textInverse,
   },
 
-  // Form card
-  formCard: {
-    backgroundColor: Colors.surface,
-    marginHorizontal: 20,
-    marginTop: -20,
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 8},
-    shadowOpacity: 0.06,
-    shadowRadius: 20,
-    elevation: 8,
-  },
+  // Form
+  form: {paddingHorizontal: 20, paddingTop: 24},
   welcomeTitle: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontFamily: Fonts.heavy,
+    fontSize: 30,
+    letterSpacing: -0.6,
     color: Colors.text,
-    marginBottom: 4,
-  },
-  welcomeSub: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    marginBottom: 24,
+    marginBottom: 18,
   },
 
   // Fields
-  fieldGroup: {marginBottom: 18},
+  fieldGroup: {marginBottom: 14},
   label: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
+    fontSize: 14,
     color: Colors.text,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   forgotLink: {
+    fontFamily: Fonts.semibold,
     fontSize: 13,
-    fontWeight: '600',
     color: Colors.primary,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.textLight,
     paddingHorizontal: 14,
     height: 52,
     gap: 10,
   },
   inputRowFocused: {
     borderColor: Colors.primary,
-    backgroundColor: '#fff',
   },
   input: {
     flex: 1,
+    fontFamily: Fonts.regular,
     fontSize: 15,
     color: Colors.text,
-    fontWeight: '400',
   },
 
   // CTA
-  primaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    height: 54,
-    gap: 8,
-    marginTop: 6,
-    marginBottom: 20,
-    shadowColor: Colors.primary,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  primaryBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-  },
+  primaryBtn: {height: 54, paddingVertical: 0, marginTop: 6},
 
   // Divider
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 20,
     marginBottom: 18,
   },
-  dividerLine: {flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: '#E2E8F0'},
+  dividerLine: {flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: Colors.border},
   dividerText: {
+    fontFamily: Fonts.regular,
     fontSize: 12,
-    color: Colors.textLight,
+    color: Colors.textSecondary,
     marginHorizontal: 12,
   },
 
@@ -372,13 +313,13 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.border,
   },
   socialPillText: {
+    fontFamily: Fonts.semibold,
     fontSize: 14,
-    fontWeight: '600',
     color: Colors.text,
   },
 
@@ -387,11 +328,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 28,
+    paddingTop: 16,
   },
-  footerText: {...Typography.body, color: Colors.textSecondary},
-  footerLink: {
-    ...Typography.bodyMedium,
-    color: Colors.primary,
-  },
+  footerText: {...Typography.body, fontSize: 15, color: Colors.textSecondary},
+  footerLink: {fontFamily: Fonts.bold, fontSize: 15},
 });

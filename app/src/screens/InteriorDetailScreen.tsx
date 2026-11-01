@@ -13,7 +13,8 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RouteProp} from '@react-navigation/native';
-import {Colors, Spacing} from '../theme';
+import {SUPPORT_PHONE} from '../config';
+import {Colors, Spacing, Fonts} from '../theme';
 import {RootStackParamList} from '../types';
 
 type Props = {
@@ -129,12 +130,12 @@ export const InteriorDetailScreen: React.FC<Props> = ({navigation, route}) => {
       `I'm interested in ${data.title.toLowerCase()} interiors for my property. Please share more details and schedule a consultation.`,
     ].join('\n');
 
-    const whatsappUrl = `https://wa.me/916281889589?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/${SUPPORT_PHONE}?text=${encodeURIComponent(message)}`;
 
     Linking.openURL(whatsappUrl).catch(() => {
       Alert.alert(
         'WhatsApp not available',
-        'Please install WhatsApp or contact us at +91 6281889589.',
+        `Please install WhatsApp or contact us at +${SUPPORT_PHONE}.`,
       );
     });
   };
@@ -214,7 +215,7 @@ export const InteriorDetailScreen: React.FC<Props> = ({navigation, route}) => {
 const s = StyleSheet.create({
   screen: {flex: 1, backgroundColor: Colors.background},
   center: {flex: 1, alignItems: 'center', justifyContent: 'center'},
-  centerTxt: {fontSize: 15, color: Colors.textSecondary, marginTop: 10},
+  centerTxt: {fontFamily: Fonts.regular, fontSize: 15, color: Colors.textSecondary, marginTop: 10},
 
   // Hero
   heroWrap: {position: 'relative'},
@@ -227,8 +228,8 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 6, elevation: 4,
   },
   heroBottom: {position: 'absolute', bottom: 20, left: 20, right: 20},
-  heroTitle: {fontSize: 28, fontWeight: '800', color: '#fff', marginBottom: 4},
-  heroSub: {fontSize: 14, color: 'rgba(255,255,255,0.75)'},
+  heroTitle: {fontSize: 28, fontFamily: Fonts.heavy, color: '#fff', marginBottom: 4},
+  heroSub: {fontFamily: Fonts.regular, fontSize: 14, color: 'rgba(255,255,255,0.75)'},
 
   // Body
   body: {padding: 20},
@@ -238,18 +239,18 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: Colors.primaryLight, padding: 14, borderRadius: 14, marginBottom: 24,
   },
-  priceLabel: {fontSize: 13, color: Colors.textSecondary, flex: 1},
-  priceValue: {fontSize: 16, fontWeight: '700', color: Colors.primary},
+  priceLabel: {fontFamily: Fonts.regular, fontSize: 13, color: Colors.textSecondary, flex: 1},
+  priceValue: {fontSize: 16, fontFamily: Fonts.bold, color: Colors.primary},
 
   // Sections
   section: {marginBottom: 24},
-  secTitle: {fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 12},
-  desc: {fontSize: 14, color: Colors.textSecondary, lineHeight: 22},
+  secTitle: {fontSize: 18, fontFamily: Fonts.bold, color: Colors.text, marginBottom: 12},
+  desc: {fontFamily: Fonts.regular, fontSize: 14, color: Colors.textSecondary, lineHeight: 22},
 
   // Features
   featuresList: {gap: 10},
   featureRow: {flexDirection: 'row', alignItems: 'center', gap: 10},
-  featureTxt: {fontSize: 14, color: Colors.text},
+  featureTxt: {fontFamily: Fonts.regular, fontSize: 14, color: Colors.text},
 
   // Gallery
   gallery: {flexDirection: 'row', flexWrap: 'wrap', gap: 10},
@@ -264,13 +265,13 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOffset: {width: 0, height: -4}, shadowOpacity: 0.06, shadowRadius: 12, elevation: 8,
   },
   bottomLeft: {flex: 1},
-  bottomLabel: {fontSize: 12, color: Colors.textTertiary},
-  bottomPrice: {fontSize: 18, fontWeight: '800', color: Colors.text},
+  bottomLabel: {fontFamily: Fonts.regular, fontSize: 12, color: Colors.textTertiary},
+  bottomPrice: {fontSize: 18, fontFamily: Fonts.heavy, color: Colors.text},
   enquireBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     backgroundColor: Colors.primary, borderRadius: 14,
     paddingHorizontal: 20, height: 50,
     shadowColor: Colors.primary, shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
   },
-  enquireTxt: {fontSize: 15, fontWeight: '700', color: '#fff'},
+  enquireTxt: {fontSize: 15, fontFamily: Fonts.bold, color: '#fff'},
 });

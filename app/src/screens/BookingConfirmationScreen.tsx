@@ -1,12 +1,14 @@
 import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {View, Text, StyleSheet, ScrollView, StatusBar, TouchableOpacity} from 'react-native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RouteProp} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {propertiesApi, ApiProperty} from '../api/client';
-import {Colors} from '../theme';
+import {ArchImage, FestiveScene, FestiveStrip, useStripHeight} from '../components/Arch';
+import {useTheme} from '../context/ThemeContext';
+import {Colors, Fonts} from '../theme';
 import {RootStackParamList} from '../types';
-import {parseDate} from '../utils/format';
+import {formatVisitDay} from '../utils/format';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'BookingConfirmation'>;
@@ -15,86 +17,55 @@ type Props = {
 
 export const BookingConfirmationScreen: React.FC<Props> = ({navigation, route}) => {
   const {booking} = route.params;
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const stripHeight = useStripHeight();
   const [property, setProperty] = React.useState<ApiProperty | null>(null);
 
   React.useEffect(() => {
     propertiesApi.getById(booking.propertyId).then(setProperty).catch(() => {});
   }, [booking.propertyId]);
 
-  const fmtDate = parseDate(booking.date).toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  // Navy on navy would hide the button, so the everyday look uses the brand gold here
+  const buttonBg = theme.festival ? theme.accent : Colors.gold;
+  const buttonText = theme.festival ? theme.onAccent : Colors.primary;
 
   return (
-    <View style={s.container}>
-      <View style={s.body}>
-        {/* Success icon */}
-        <View style={s.successCircle}>
-          <Icon name="check" size={44} color="#fff" />
-        </View>
-        <Text style={s.title}>Visit Requested</Text>
-        <Text style={s.sub}>We'll confirm the time with you soon</Text>
+    <View style={[s.container, {backgroundColor: theme.primary}]}>
+      <StatusBar barStyle="light-content" />
+      {theme.festival ? <FestiveStrip festival={theme.festival} /> : null}
+      <ScrollView
+        contentContainerStyle={[s.body, {paddingTop: theme.festival ? stripHeight + 16 : insets.top + 40}]}
+        showsVerticalScrollIndicator={false}>
+        <ArchImage uri={property?.images?.[0]} width={200} height={232} label={property?.title} />
+        <Text style={s.title} accessibilityRole="header">Visit requested</Text>
+        <Text style={s.sub}>We'll confirm the time with you soon.</Text>
 
-        {/* Details card */}
         <View style={s.card}>
-          {[
-            {icon: 'home', label: 'Property', value: property?.title || 'Unknown'},
-            {icon: 'event', label: 'Date', value: fmtDate},
-            {icon: 'schedule', label: 'Time', value: booking.time},
-            {icon: 'info', label: 'Status', value: 'Requested', color: Colors.warning},
-          ].map((row, i, arr) => (
-            <View key={row.label}>
-              <View style={s.row}>
-                <View style={s.rowIcon}>
-                  <Icon name={row.icon} size={18} color={Colors.primary} />
-                </View>
-                <View style={{flex: 1}}>
-                  <Text style={s.rowLabel}>{row.label}</Text>
-                  <Text style={[s.rowVal, row.color ? {color: row.color} : undefined]}>
-                    {row.value}
-                  </Text>
-                </View>
-              </View>
-              {i < arr.length - 1 && <View style={s.sep} />}
-            </View>
-          ))}
-          {booking.notes ? (
-            <>
-              <View style={s.sep} />
-              <View style={s.row}>
-                <View style={s.rowIcon}>
-                  <Icon name="notes" size={18} color={Colors.primary} />
-                </View>
-                <View style={{flex: 1}}>
-                  <Text style={s.rowLabel}>Notes</Text>
-                  <Text style={s.rowVal}>{booking.notes}</Text>
-                </View>
-              </View>
-            </>
-          ) : null}
+          <Text style={s.cardTitle}>{property?.title || 'Your visit'}</Text>
+          <Text style={s.cardLine}>{formatVisitDay(booking.date)}, {booking.time}</Text>
+          {booking.notes ? <Text style={s.cardLine}>{booking.notes}</Text> : null}
+          <Text style={s.cardRef}>Request #{booking.id.slice(-8).toUpperCase()}</Text>
         </View>
 
-        <Text style={s.confId}>
-          Request #{booking.id.slice(-8).toUpperCase()}
-        </Text>
-      </View>
+        {theme.festival ? (
+          <>
+            <View style={s.scene}><FestiveScene festival={theme.festival} width={176} /></View>
+            <Text style={s.wish}>{theme.wish}</Text>
+          </>
+        ) : null}
+      </ScrollView>
 
-      {/* Actions */}
-      <View style={s.actions}>
+      <View style={[s.actions, {paddingBottom: Math.max(insets.bottom, 16) + 4}]}>
         <TouchableOpacity
-          style={s.primaryBtn}
+          style={[s.primaryBtn, {backgroundColor: buttonBg}]}
           onPress={() => navigation.navigate('MyBookings')}
-          activeOpacity={0.85}>
-          <Text style={s.primaryBtnTxt}>View My Bookings</Text>
+          activeOpacity={0.85}
+          accessibilityRole="button">
+          <Text style={[s.primaryTxt, {color: buttonText}]}>View your visits</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={s.secondaryBtn}
-          onPress={() => navigation.navigate('Main')}
-          activeOpacity={0.85}>
-          <Text style={s.secondaryBtnTxt}>Back to Home</Text>
+        <TouchableOpacity style={s.homeBtn} onPress={() => navigation.navigate('Main')} accessibilityRole="button">
+          <Text style={s.homeTxt}>Back to Home</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -102,77 +73,19 @@ export const BookingConfirmationScreen: React.FC<Props> = ({navigation, route}) 
 };
 
 const s = StyleSheet.create({
-  container: {flex: 1, backgroundColor: Colors.background},
-  body: {flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24},
-  successCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: Colors.success,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-    shadowColor: Colors.success,
-    shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  title: {fontSize: 24, fontWeight: '800', color: Colors.text, marginBottom: 6},
-  sub: {fontSize: 14, color: Colors.textSecondary, marginBottom: 28},
-  card: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 18,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  row: {flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 8},
-  rowIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: Colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  rowLabel: {fontSize: 12, color: Colors.textSecondary, marginBottom: 2},
-  rowVal: {fontSize: 14, fontWeight: '600', color: Colors.text},
-  sep: {height: StyleSheet.hairlineWidth, backgroundColor: '#E2E8F0', marginVertical: 2},
-  confId: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.textLight,
-    letterSpacing: 1,
-    marginTop: 18,
-  },
-  actions: {paddingHorizontal: 24, paddingBottom: 36, gap: 12},
-  primaryBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    height: 54,
-    shadowColor: Colors.primary,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  primaryBtnTxt: {fontSize: 16, fontWeight: '700', color: '#fff'},
-  secondaryBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    height: 54,
-    borderWidth: 1.5,
-    borderColor: Colors.chipBorder,
-  },
-  secondaryBtnTxt: {fontSize: 16, fontWeight: '700', color: Colors.text},
+  container: {flex: 1},
+  body: {flexGrow: 1, alignItems: 'center', paddingHorizontal: 20, paddingBottom: 16},
+  title: {marginTop: 16, fontFamily: Fonts.heavy, fontSize: 32, letterSpacing: -0.6, color: Colors.textInverse},
+  sub: {marginTop: 6, fontFamily: Fonts.regular, fontSize: 16, color: Colors.textInverse},
+  card: {alignSelf: 'stretch', marginTop: 18, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 16, backgroundColor: Colors.surface},
+  cardTitle: {fontFamily: Fonts.bold, fontSize: 17, color: Colors.text},
+  cardLine: {marginTop: 3, fontFamily: Fonts.regular, fontSize: 15, color: Colors.textSecondary},
+  cardRef: {marginTop: 8, fontFamily: Fonts.semibold, fontSize: 12, letterSpacing: 0.5, color: Colors.textSecondary},
+  scene: {marginTop: 16},
+  wish: {marginTop: 4, fontFamily: Fonts.display, fontSize: 22, color: Colors.textInverse, textAlign: 'center'},
+  actions: {paddingHorizontal: 20, paddingTop: 8},
+  primaryBtn: {height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center'},
+  primaryTxt: {fontFamily: Fonts.bold, fontSize: 16},
+  homeBtn: {height: 44, marginTop: 4, alignItems: 'center', justifyContent: 'center'},
+  homeTxt: {fontFamily: Fonts.semibold, fontSize: 15, color: Colors.textInverse},
 });

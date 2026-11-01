@@ -109,6 +109,15 @@ export const authApi = {
 };
 
 // ══════════════════════════════════════
+// FESTIVE THEME
+// ══════════════════════════════════════
+
+export const festiveApi = {
+  /** Which festival the app should be dressed for today, if any */
+  current: () => request<{festival: string | null; endsOn: string | null}>('/festive'),
+};
+
+// ══════════════════════════════════════
 // PROPERTIES
 // ══════════════════════════════════════
 

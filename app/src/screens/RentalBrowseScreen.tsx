@@ -6,7 +6,7 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {rentalsApi, ApiRental} from '../api/client';
 import {ErrorState} from '../components/ErrorState';
 import {RootStackParamList} from '../types';
-import {Colors, Spacing} from '../theme';
+import {Colors, Spacing, Fonts} from '../theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -94,26 +94,26 @@ export const RentalBrowseScreen: React.FC = () => {
 const s = StyleSheet.create({
   container: {flex: 1, backgroundColor: Colors.background},
   header: {paddingHorizontal: 20, paddingTop: Spacing.xxxl + 10, paddingBottom: 4},
-  title: {fontSize: 28, fontWeight: '800', color: Colors.text, letterSpacing: -0.5},
-  sub: {fontSize: 14, color: Colors.textSecondary, marginTop: 2},
+  title: {fontSize: 28, fontFamily: Fonts.heavy, color: Colors.text, letterSpacing: -0.5},
+  sub: {fontFamily: Fonts.regular, fontSize: 14, color: Colors.textSecondary, marginTop: 2},
   searchWrap: {paddingHorizontal: 20, paddingVertical: 12},
   searchBar: {flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14, height: 50, gap: 10, borderWidth: 1, borderColor: Colors.chipBorder},
-  input: {flex: 1, fontSize: 15, color: Colors.text},
+  input: {flex: 1, fontFamily: Fonts.regular, fontSize: 15, color: Colors.text},
   card: {backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', marginBottom: 14, shadowColor: '#000', shadowOffset: {width: 0, height: 3}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3},
   cardImg: {width: '100%', height: 170, backgroundColor: Colors.borderLight},
   badgeRow: {position: 'absolute', top: 12, left: 12, flexDirection: 'row', gap: 6},
   availBadge: {paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8},
-  availTxt: {fontSize: 11, fontWeight: '700', color: '#fff'},
+  availTxt: {fontSize: 11, fontFamily: Fonts.bold, color: '#fff'},
   cardBody: {padding: 14},
-  cardTitle: {fontSize: 17, fontWeight: '700', color: Colors.text, marginBottom: 2},
-  cardUnit: {fontSize: 13, fontWeight: '600', color: Colors.primary, marginBottom: 6},
+  cardTitle: {fontSize: 17, fontFamily: Fonts.bold, color: Colors.text, marginBottom: 2},
+  cardUnit: {fontSize: 13, fontFamily: Fonts.semibold, color: Colors.primary, marginBottom: 6},
   locRow: {flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 10},
-  locTxt: {fontSize: 13, color: Colors.textSecondary},
+  locTxt: {fontFamily: Fonts.regular, fontSize: 13, color: Colors.textSecondary},
   div: {height: StyleSheet.hairlineWidth, backgroundColor: Colors.divider, marginBottom: 10},
   botRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
-  rent: {fontSize: 20, fontWeight: '800', color: Colors.text},
+  rent: {fontSize: 20, fontFamily: Fonts.heavy, color: Colors.text},
   chips: {flexDirection: 'row', gap: 6},
-  chip: {fontSize: 11, fontWeight: '600', color: Colors.textSecondary, backgroundColor: Colors.borderLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, overflow: 'hidden'},
+  chip: {fontSize: 11, fontFamily: Fonts.semibold, color: Colors.textSecondary, backgroundColor: Colors.borderLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, overflow: 'hidden'},
   empty: {alignItems: 'center', paddingVertical: 60},
-  emptyTxt: {fontSize: 14, color: Colors.textSecondary, marginTop: 10},
+  emptyTxt: {fontFamily: Fonts.regular, fontSize: 14, color: Colors.textSecondary, marginTop: 10},
 });

@@ -7,18 +7,21 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Image,
   Linking,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RouteProp} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {propertiesApi, bookingsApi, ApiProperty} from '../api/client';
+import {ArchImage, BackButton, FestiveStrip, useStripHeight} from '../components/Arch';
+import {Button} from '../components/Button';
 import {ErrorState} from '../components/ErrorState';
+import {SUPPORT_PHONE} from '../config';
 import {useRole} from '../context/RoleContext';
-import {Colors, Spacing} from '../theme';
+import {useTheme} from '../context/ThemeContext';
+import {Colors, Fonts} from '../theme';
 import {RootStackParamList, Booking} from '../types';
-import {parseDate, toDateString} from '../utils/format';
+import {formatVisitDay, parseDate, toDateString} from '../utils/format';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'BookingScreen'>;
@@ -40,7 +43,6 @@ const getNext7Days = () => {
       date: toDateString(d),
       day: d.toLocaleDateString('en-US', {weekday: 'short'}),
       num: d.getDate(),
-      month: d.toLocaleDateString('en-US', {month: 'short'}),
     });
   }
   return days;
@@ -48,6 +50,9 @@ const getNext7Days = () => {
 
 export const BookingScreen: React.FC<Props> = ({navigation, route}) => {
   const {mode} = useRole();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const stripHeight = useStripHeight();
   const [property, setProperty] = useState<ApiProperty | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selDate, setSelDate] = useState('');
@@ -121,7 +126,7 @@ export const BookingScreen: React.FC<Props> = ({navigation, route}) => {
         `Looking forward to the visit!`,
       ].filter(Boolean).join('\n');
 
-      const whatsappUrl = `https://wa.me/916281889589?text=${encodeURIComponent(message)}`;
+      const whatsappUrl = `https://wa.me/${SUPPORT_PHONE}?text=${encodeURIComponent(message)}`;
 
       // Navigate to confirmation screen
       navigation.replace('BookingConfirmation', {booking});
@@ -131,7 +136,7 @@ export const BookingScreen: React.FC<Props> = ({navigation, route}) => {
         Linking.openURL(whatsappUrl).catch(() => {
           Alert.alert(
             'Could Not Open WhatsApp',
-            `Your request is saved, but we haven't been told about it yet. Please contact us at +91 6281889589 and quote request ${res.booking.id.slice(-8).toUpperCase()}.`,
+            `Your request is saved, but we haven't been told about it yet. Please contact us at +${SUPPORT_PHONE} and quote request ${res.booking.id.slice(-8).toUpperCase()}.`,
           );
         });
       }, 500);
@@ -142,59 +147,71 @@ export const BookingScreen: React.FC<Props> = ({navigation, route}) => {
     }
   };
 
-  return (
-    <View style={s.container}>
-      {/* Header */}
-      <View style={s.header}>
-        <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={22} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={s.headerTitle}>Book a Visit</Text>
-        <View style={{width: 40}} />
-      </View>
+  const chosen = (active: boolean) =>
+    active ? {backgroundColor: theme.primary, borderColor: theme.primary} : undefined;
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
+  return (
+    <View style={[s.container, {backgroundColor: theme.soft}]}>
+      {/* Header */}
+      {theme.festival ? (
+        <View style={[s.band, {backgroundColor: theme.primary, paddingTop: stripHeight + 14}]}>
+          <FestiveStrip festival={theme.festival} />
+          <View style={s.headerRow}>
+            <BackButton onPress={() => navigation.goBack()} />
+            <Text style={[s.headerTitle, s.onBand]} numberOfLines={1} adjustsFontSizeToFit accessibilityRole="header">When can you visit?</Text>
+          </View>
+        </View>
+      ) : (
+        <View style={[s.plainHeader, {paddingTop: insets.top + 12}]}>
+          <View style={s.headerRow}>
+            <BackButton onPress={() => navigation.goBack()} />
+            <Text style={s.headerTitle} numberOfLines={1} adjustsFontSizeToFit accessibilityRole="header">When can you visit?</Text>
+          </View>
+        </View>
+      )}
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         {/* Property summary */}
-        <View style={s.summaryCard}>
-          <Image source={{uri: property.images[0]}} style={s.summaryImg} />
+        <View style={s.summary}>
+          <ArchImage uri={property.images[0]} width={66} height={74} footRadius={8} />
           <View style={s.summaryInfo}>
             <Text style={s.summaryTitle} numberOfLines={2}>{property.title}</Text>
-            <View style={s.summaryLoc}>
-              <Icon name="location-on" size={13} color={Colors.primary} />
-              <Text style={s.summaryLocTxt}>{property.city}, {property.state}</Text>
-            </View>
+            <Text style={s.summaryLoc}>{property.city}, {property.state}</Text>
           </View>
         </View>
 
         {/* Date */}
-        <Text style={s.secTitle}>Select Date</Text>
+        <Text style={s.secTitle}>Pick a day</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.datesRow}>
           {dates.map(d => {
             const active = selDate === d.date;
             return (
               <TouchableOpacity
                 key={d.date}
-                style={[s.dateCard, active && s.dateCardActive]}
-                onPress={() => setSelDate(d.date)}>
-                <Text style={[s.dateDay, active && s.dateTxtActive]}>{d.day}</Text>
-                <Text style={[s.dateNum, active && s.dateTxtActive]}>{d.num}</Text>
-                <Text style={[s.dateMonth, active && s.dateTxtActive]}>{d.month}</Text>
+                style={[s.dayPill, chosen(active)]}
+                onPress={() => setSelDate(d.date)}
+                accessibilityRole="button"
+                accessibilityState={{selected: active}}>
+                <Text style={[s.dayName, active && s.onBand]}>{d.day}</Text>
+                <Text style={[s.dayNum, active && s.onBand]}>{d.num}</Text>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
 
         {/* Time */}
-        <Text style={s.secTitle}>Select Time</Text>
+        <Text style={s.secTitle}>Pick a time</Text>
         <View style={s.timeGrid}>
           {timeSlots.map(t => {
             const active = selTime === t;
             return (
               <TouchableOpacity
                 key={t}
-                style={[s.timeSlot, active && s.timeSlotActive]}
-                onPress={() => setSelTime(t)}>
-                <Text style={[s.timeTxt, active && s.timeTxtActive]}>{t}</Text>
+                style={[s.timeSlot, chosen(active)]}
+                onPress={() => setSelTime(t)}
+                accessibilityRole="button"
+                accessibilityState={{selected: active}}>
+                <Text style={[s.timeTxt, active && s.onBand]}>{t}</Text>
               </TouchableOpacity>
             );
           })}
@@ -208,137 +225,59 @@ export const BookingScreen: React.FC<Props> = ({navigation, route}) => {
           style={s.notesInput}
           value={notes}
           onChangeText={setNotes}
-          placeholder="Any questions or special requests..."
-          placeholderTextColor={Colors.textLight}
+          placeholder="Any questions or special requests"
+          placeholderTextColor={Colors.textSecondary}
           multiline
           textAlignVertical="top"
+          accessibilityLabel="Notes"
         />
       </ScrollView>
 
       {/* Bottom CTA */}
-      <View style={s.bottomBar}>
-        <TouchableOpacity
-          style={[s.confirmBtn, (!selDate || !selTime) && {opacity: 0.5}]}
+      <View style={[s.bottomBar, {paddingBottom: Math.max(insets.bottom, 12) + 4}]}>
+        <View>
+          <Text style={s.bottomLbl}>{selDate ? formatVisitDay(selDate) : 'Choose a day'}</Text>
+          <Text style={s.bottomVal}>{selTime || 'and a time'}</Text>
+        </View>
+        <Button
+          title="Send request"
           onPress={handleBook}
-          disabled={!selDate || !selTime || loading}
-          activeOpacity={0.85}>
-          <Icon name="check-circle" size={18} color="#fff" />
-          <Text style={s.confirmBtnTxt}>
-            {loading ? 'Sending...' : 'Request Visit'}
-          </Text>
-        </TouchableOpacity>
+          loading={loading}
+          disabled={!selDate || !selTime}
+         
+          style={s.sendBtn}
+        />
       </View>
     </View>
   );
 };
 
 const s = StyleSheet.create({
-  container: {flex: 1, backgroundColor: Colors.background},
+  container: {flex: 1},
   errWrap: {flex: 1, alignItems: 'center', justifyContent: 'center'},
-  errTxt: {fontSize: 15, color: Colors.textSecondary},
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: Spacing.xxxl + 8,
-    paddingBottom: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E2E8F0',
-  },
-  backBtn: {width: 40, height: 40, borderRadius: 14, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center'},
-  headerTitle: {fontSize: 18, fontWeight: '700', color: Colors.text},
-  scroll: {padding: 20, paddingBottom: 100},
-
-  // Summary
-  summaryCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    overflow: 'hidden',
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  summaryImg: {width: 90, height: 76, backgroundColor: Colors.borderLight},
-  summaryInfo: {flex: 1, padding: 12, justifyContent: 'center'},
-  summaryTitle: {fontSize: 14, fontWeight: '600', color: Colors.text, marginBottom: 4},
-  summaryLoc: {flexDirection: 'row', alignItems: 'center', gap: 3},
-  summaryLocTxt: {fontSize: 12, color: Colors.textSecondary},
-
-  // Section title
-  secTitle: {fontSize: 16, fontWeight: '700', color: Colors.text, marginBottom: 12},
-  optional: {fontWeight: '400', color: Colors.textLight},
-
-  // Dates
-  datesRow: {gap: 10, marginBottom: 24},
-  dateCard: {
-    width: 68,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 14,
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  dateCardActive: {backgroundColor: Colors.primary, borderColor: Colors.primary},
-  dateDay: {fontSize: 12, fontWeight: '600', color: Colors.textSecondary, marginBottom: 4},
-  dateNum: {fontSize: 22, fontWeight: '800', color: Colors.text},
-  dateMonth: {fontSize: 11, color: Colors.textSecondary, marginTop: 2},
-  dateTxtActive: {color: '#fff'},
-
-  // Time
-  timeGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24},
-  timeSlot: {
-    paddingHorizontal: 16,
-    paddingVertical: 11,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  timeSlotActive: {backgroundColor: Colors.primary, borderColor: Colors.primary},
-  timeTxt: {fontSize: 13, fontWeight: '600', color: Colors.textSecondary},
-  timeTxtActive: {color: '#fff'},
-
-  // Notes
-  notesInput: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    padding: 14,
-    fontSize: 14,
-    color: Colors.text,
-    minHeight: 100,
-    marginBottom: 20,
-  },
-
-  // Bottom
-  bottomBar: {
-    padding: 16,
-    paddingBottom: 32,
-    backgroundColor: '#fff',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E2E8F0',
-  },
-  confirmBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    height: 54,
-    shadowColor: Colors.primary,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  confirmBtnTxt: {fontSize: 16, fontWeight: '700', color: '#fff'},
+  errTxt: {fontFamily: Fonts.regular, fontSize: 15, color: Colors.textSecondary},
+  onBand: {color: Colors.textInverse},
+  band: {paddingHorizontal: 20, paddingBottom: 18, overflow: 'hidden'},
+  plainHeader: {paddingHorizontal: 20, paddingBottom: 8},
+  headerRow: {flexDirection: 'row', alignItems: 'center', gap: 12},
+  headerTitle: {flex: 1, fontFamily: Fonts.heavy, fontSize: 27, letterSpacing: -0.5, color: Colors.text},
+  scroll: {padding: 20, paddingBottom: 24},
+  summary: {flexDirection: 'row', alignItems: 'center', gap: 12},
+  summaryInfo: {flex: 1, minWidth: 0},
+  summaryTitle: {fontFamily: Fonts.bold, fontSize: 17, color: Colors.text},
+  summaryLoc: {marginTop: 2, fontFamily: Fonts.regular, fontSize: 14, color: Colors.textSecondary},
+  secTitle: {marginTop: 20, marginBottom: 10, fontFamily: Fonts.bold, fontSize: 17, color: Colors.text},
+  optional: {fontFamily: Fonts.regular, color: Colors.textSecondary},
+  datesRow: {gap: 8},
+  dayPill: {width: 64, height: 96, paddingBottom: 12, alignItems: 'center', justifyContent: 'flex-end', borderWidth: 1, borderColor: Colors.textLight, borderTopLeftRadius: 32, borderTopRightRadius: 32, borderBottomLeftRadius: 10, borderBottomRightRadius: 10, backgroundColor: Colors.surface},
+  dayName: {fontFamily: Fonts.semibold, fontSize: 13, color: Colors.text},
+  dayNum: {fontFamily: Fonts.display, fontSize: 23, color: Colors.text},
+  timeGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: 8},
+  timeSlot: {width: '31.8%', height: 48, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.textLight, borderRadius: 12, backgroundColor: Colors.surface},
+  timeTxt: {fontFamily: Fonts.semibold, fontSize: 14, color: Colors.text},
+  notesInput: {minHeight: 88, padding: 14, borderWidth: 1, borderColor: Colors.textLight, borderRadius: 14, backgroundColor: Colors.surface, fontFamily: Fonts.regular, fontSize: 15, color: Colors.text},
+  bottomBar: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: Colors.border, backgroundColor: Colors.surface},
+  bottomLbl: {fontFamily: Fonts.regular, fontSize: 13, color: Colors.textSecondary},
+  bottomVal: {marginTop: 1, fontFamily: Fonts.bold, fontSize: 15, color: Colors.text},
+  sendBtn: {height: 52, paddingVertical: 0, paddingHorizontal: 30},
 });

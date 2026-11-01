@@ -2,11 +2,13 @@ import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {ArchIcon, ArchIconName} from '../components/Arch';
 import {useAuth} from '../context/AuthContext';
 import {useRole} from '../context/RoleContext';
+import {useTheme} from '../context/ThemeContext';
 import {FEATURES} from '../config';
-import {Colors, Typography} from '../theme';
+import {Colors, Fonts} from '../theme';
 import {
   RootStackParamList,
   AuthStackParamList,
@@ -23,7 +25,6 @@ import {ProfileScreen} from '../screens/ProfileScreen';
 import {PropertyDetailScreen} from '../screens/PropertyDetailScreen';
 import {BookingScreen} from '../screens/BookingScreen';
 import {BookingConfirmationScreen} from '../screens/BookingConfirmationScreen';
-import {BookingsListScreen} from '../screens/BookingsListScreen';
 import {BookingsTabScreen} from '../screens/BookingsTabScreen';
 import {AddPropertyScreen} from '../screens/AddPropertyScreen';
 
@@ -45,12 +46,40 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const OwnerTab = createBottomTabNavigator<OwnerTabParamList>();
 const TenantTab = createBottomTabNavigator<TenantTabParamList>();
 
-const tabBarStyle = {
-  backgroundColor: Colors.surface,
-  borderTopColor: Colors.borderLight,
-  paddingTop: 8,
-  paddingBottom: 28,
-  height: 80,
+const TAB_ICONS: Record<string, ArchIconName> = {
+  Home: 'home',
+  Bookings: 'visits',
+  Rentals: 'home',
+  Interiors: 'interiors',
+  Profile: 'you',
+  BrowseRentals: 'home',
+  Saved: 'heart',
+};
+
+const useTabOptions = () => {
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+
+  return ({route}: {route: {name: string}}) => ({
+    headerShown: false,
+    tabBarIcon: ({focused}: {focused: boolean}) => (
+      <ArchIcon
+        name={TAB_ICONS[route.name]}
+        size={23}
+        strokeWidth={focused ? 2.2 : 2}
+        color={focused ? theme.tabIcon : Colors.textSecondary}
+      />
+    ),
+    tabBarActiveTintColor: theme.ink,
+    tabBarInactiveTintColor: Colors.textSecondary,
+    tabBarLabelStyle: {fontFamily: Fonts.semibold, fontSize: 12},
+    tabBarStyle: {
+      backgroundColor: Colors.surface,
+      borderTopColor: Colors.border,
+      paddingTop: 6,
+      height: 60 + insets.bottom,
+    },
+  });
 };
 
 const AuthNavigator: React.FC = () => (
@@ -61,117 +90,46 @@ const AuthNavigator: React.FC = () => (
 );
 
 // ── Owner/Investor Tab Navigator ──
-// Home, Bookings, Rentals (my properties), Interiors, Profile
-const OwnerTabNavigator: React.FC = () => (
-  <OwnerTab.Navigator
-    screenOptions={({route}) => ({
-      headerShown: false,
-      tabBarIcon: ({focused, color, size}) => {
-        let iconName: string;
-        switch (route.name) {
-          case 'Home':
-            iconName = 'home';
-            break;
-          case 'Bookings':
-            iconName = 'event-note';
-            break;
-          case 'Rentals':
-            iconName = 'home-work';
-            break;
-          case 'Saved':
-            iconName = 'bookmark';
-            break;
-          case 'Interiors':
-            iconName = 'palette';
-            break;
-          case 'Profile':
-            iconName = 'person';
-            break;
-          default:
-            iconName = 'home';
-        }
-        return (
-          <Icon
-            name={iconName}
-            size={focused ? size + 2 : size}
-            color={color}
-          />
-        );
-      },
-      tabBarActiveTintColor: Colors.primary,
-      tabBarInactiveTintColor: Colors.textLight,
-      tabBarLabelStyle: {
-        ...Typography.small,
-        marginTop: -2,
-      },
-      tabBarStyle,
-    })}>
-    <OwnerTab.Screen name="Home" component={HomeScreen} />
-    <OwnerTab.Screen
-      name="Bookings"
-      component={BookingsTabScreen}
-      options={{tabBarLabel: 'Bookings'}}
-    />
-    {FEATURES.rentals ? (
-      <OwnerTab.Screen
-        name="Rentals"
-        component={RentalListScreen}
-        options={{tabBarLabel: 'My Rentals'}}
-      />
-    ) : (
-      <OwnerTab.Screen name="Saved" component={SavedScreen} />
-    )}
-    <OwnerTab.Screen name="Interiors" component={InteriorsScreen} />
-    <OwnerTab.Screen name="Profile" component={ProfileScreen} />
-  </OwnerTab.Navigator>
-);
+// Home, Visits, Rentals (my properties), Interiors, You
+const OwnerTabNavigator: React.FC = () => {
+  const tabOptions = useTabOptions();
+  return (
+    <OwnerTab.Navigator screenOptions={tabOptions}>
+      <OwnerTab.Screen name="Home" component={HomeScreen} />
+      <OwnerTab.Screen name="Bookings" options={{tabBarLabel: 'Visits'}}>
+        {() => <BookingsTabScreen />}
+      </OwnerTab.Screen>
+      {FEATURES.rentals ? (
+        <OwnerTab.Screen
+          name="Rentals"
+          component={RentalListScreen}
+          options={{tabBarLabel: 'My Rentals'}}
+        />
+      ) : null}
+      <OwnerTab.Screen name="Interiors" component={InteriorsScreen} />
+      <OwnerTab.Screen name="Profile" component={ProfileScreen} options={{tabBarLabel: 'You'}} />
+    </OwnerTab.Navigator>
+  );
+};
 
 // ── Tenant/Renter Tab Navigator ──
-// Browse Rentals, Bookings, Saved, Profile
-const TenantTabNavigator: React.FC = () => (
-  <TenantTab.Navigator
-    screenOptions={({route}) => ({
-      headerShown: false,
-      tabBarIcon: ({focused, color, size}) => {
-        let iconName: string;
-        switch (route.name) {
-          case 'BrowseRentals':
-            iconName = 'apartment';
-            break;
-          case 'Saved':
-            iconName = 'bookmark';
-            break;
-          case 'Profile':
-            iconName = 'person';
-            break;
-          default:
-            iconName = 'apartment';
-        }
-        return (
-          <Icon
-            name={iconName}
-            size={focused ? size + 2 : size}
-            color={color}
-          />
-        );
-      },
-      tabBarActiveTintColor: Colors.primary,
-      tabBarInactiveTintColor: Colors.textLight,
-      tabBarLabelStyle: {
-        ...Typography.small,
-        marginTop: -2,
-      },
-      tabBarStyle,
-    })}>
-    <TenantTab.Screen
-      name="BrowseRentals"
-      component={RentalBrowseScreen}
-      options={{tabBarLabel: 'Rentals'}}
-    />
-    <TenantTab.Screen name="Saved" component={SavedScreen} />
-    <TenantTab.Screen name="Profile" component={ProfileScreen} />
-  </TenantTab.Navigator>
-);
+// Browse Rentals, Saved, You
+const TenantTabNavigator: React.FC = () => {
+  const tabOptions = useTabOptions();
+  return (
+    <TenantTab.Navigator screenOptions={tabOptions}>
+      <TenantTab.Screen
+        name="BrowseRentals"
+        component={RentalBrowseScreen}
+        options={{tabBarLabel: 'Rentals'}}
+      />
+      <TenantTab.Screen name="Saved">
+        {() => <SavedScreen />}
+      </TenantTab.Screen>
+      <TenantTab.Screen name="Profile" component={ProfileScreen} options={{tabBarLabel: 'You'}} />
+    </TenantTab.Navigator>
+  );
+};
 
 const MainNavigator: React.FC = () => {
   const {isOwner} = useRole();
@@ -219,11 +177,12 @@ export const AppNavigator: React.FC = () => {
               component={RentalPropertyDetailScreen}
               options={{animation: 'slide_from_right'}}
             />
-            <RootStack.Screen
-              name="MyBookings"
-              component={BookingsListScreen}
-              options={{animation: 'slide_from_right'}}
-            />
+            <RootStack.Screen name="MyBookings" options={{animation: 'slide_from_right'}}>
+              {() => <BookingsTabScreen showBack />}
+            </RootStack.Screen>
+            <RootStack.Screen name="Saved" options={{animation: 'slide_from_right'}}>
+              {() => <SavedScreen showBack />}
+            </RootStack.Screen>
             <RootStack.Screen
               name="InteriorDetail"
               component={InteriorDetailScreen}

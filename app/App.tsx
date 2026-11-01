@@ -1,23 +1,28 @@
 import React from 'react';
-import {StatusBar, useColorScheme} from 'react-native';
+import {StatusBar} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {AuthProvider} from './src/context/AuthContext';
 import {RoleProvider} from './src/context/RoleContext';
+import {ThemeProvider, useTheme} from './src/context/ThemeContext';
 import {AppNavigator} from './src/navigation/AppNavigator';
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+// Screens are light all year, but sit under a dark band during a festival
+const ThemedStatusBar: React.FC = () => {
+  const {festival} = useTheme();
+  return <StatusBar barStyle={festival ? 'light-content' : 'dark-content'} />;
+};
 
+function App(): React.JSX.Element {
   return (
     <SafeAreaProvider>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-      />
-      <AuthProvider>
-        <RoleProvider>
-          <AppNavigator />
-        </RoleProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <ThemedStatusBar />
+        <AuthProvider>
+          <RoleProvider>
+            <AppNavigator />
+          </RoleProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

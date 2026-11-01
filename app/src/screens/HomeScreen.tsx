@@ -6,41 +6,52 @@ import {
   ScrollView,
   FlatList,
   TouchableOpacity,
-  Image,
   TextInput,
-  Dimensions,
   ActivityIndicator,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {useAuth} from '../context/AuthContext';
-import {propertiesApi, favoritesApi, ApiProperty} from '../api/client';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {propertiesApi, ApiProperty} from '../api/client';
+import {
+  ArchIcon,
+  ArchImage,
+  FestiveScene,
+  FestiveStrip,
+  Logo,
+  PriceTag,
+  RoundButton,
+  useStripHeight,
+} from '../components/Arch';
 import {ErrorState} from '../components/ErrorState';
 import {FilterModal, FilterState, DEFAULT_FILTERS} from '../components/FilterModal';
-import {Colors} from '../theme';
+import {useTheme} from '../context/ThemeContext';
+import {Colors, Fonts} from '../theme';
 import {RootStackParamList} from '../types';
-import {formatPrice} from '../utils/format';
+import {formatArea, formatPrice} from '../utils/format';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-const {width} = Dimensions.get('window');
-const CARD_W = width * 0.7;
 
-const PROPERTY_TYPES = [
-  {key: 'all', label: 'All', icon: 'apps'},
-  {key: 'apartment', label: 'Apartment', icon: 'apartment'},
-  {key: 'house', label: 'House', icon: 'house'},
-  {key: 'villa', label: 'Villa', icon: 'villa'},
-  {key: 'condo', label: 'Condo', icon: 'business'},
-  {key: 'penthouse', label: 'Penthouse', icon: 'location-city'},
+const QUICK_FILTERS = [
+  {key: 'all', label: 'All homes'},
+  {key: '2bhk', label: '2 BHK', bedrooms: 2},
+  {key: '3bhk', label: '3 BHK', bedrooms: 3},
+  {key: 'villa', label: 'Villas', type: 'villa'},
 ];
+
+const summary = (item: ApiProperty) =>
+  `${item.city} · ${item.bedrooms} BHK · ${formatArea(item.area, item.areaUnit)}`;
 
 export const HomeScreen: React.FC = () => {
   const nav = useNavigation<Nav>();
-  const {user} = useAuth();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const {width} = useWindowDimensions();
+  const stripHeight = useStripHeight();
   const [query, setQuery] = useState('');
-  const [activeType, setActiveType] = useState('all');
+  const [quickKey, setQuickKey] = useState('all');
   const [featured, setFeatured] = useState<ApiProperty[]>([]);
   const [all, setAll] = useState<ApiProperty[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,18 +73,20 @@ export const HomeScreen: React.FC = () => {
   ].filter(Boolean).length;
 
   const fetchPage = useCallback(
-    (nextPage: number) =>
-      propertiesApi.list({
-        type: filters.type || (activeType !== 'all' ? activeType : undefined),
+    (nextPage: number) => {
+      const quick = QUICK_FILTERS.find(q => q.key === quickKey);
+      return propertiesApi.list({
+        type: filters.type || quick?.type,
         city: filters.city || undefined,
         search: query || undefined,
         minPrice: filters.minPrice ?? undefined,
         maxPrice: filters.maxPrice ?? undefined,
-        bedrooms: filters.bedrooms ?? undefined,
+        bedrooms: filters.bedrooms ?? quick?.bedrooms,
         sort: filters.sortBy !== 'default' ? filters.sortBy : undefined,
         page: nextPage,
-      }),
-    [activeType, query, filters],
+      });
+    },
+    [quickKey, query, filters],
   );
 
   const fetchData = useCallback(async () => {
@@ -118,89 +131,111 @@ export const HomeScreen: React.FC = () => {
     }
   };
 
-  const toggleFav = async (propertyId: string) => {
-    try {
-      const res = await favoritesApi.toggle(propertyId);
-      const update = (list: ApiProperty[]) =>
-        list.map(p =>
-          p.id === propertyId ? {...p, isFavorite: res.isFavorite} : p,
-        );
-      setFeatured(update);
-      setAll(update);
-    } catch (e) {
-      console.warn('Failed to toggle favorite:', e);
-    }
-  };
-
   const goDetail = (p: ApiProperty) =>
     nav.navigate('PropertyDetail', {propertyId: p.id});
 
   if (loading) {
     return (
-      <View style={[s.screen, {justifyContent: 'center', alignItems: 'center'}]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={[s.screen, s.center, {backgroundColor: theme.soft}]}>
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
 
+  const onBand = !!theme.festival;
+  const cityLabel = filters.city || 'All cities';
+
+  const topBar = (
+    <View style={s.topBar}>
+      <TouchableOpacity
+        style={s.cityBtn}
+        onPress={() => setShowFilters(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`Change city, currently ${cityLabel}`}>
+        <Logo onDark={onBand} />
+        <View>
+          <Text style={[s.cityHint, onBand && s.onBand]}>Looking in</Text>
+          <View style={s.cityRow}>
+            <Text style={[s.cityName, onBand && s.onBand]}>{cityLabel}</Text>
+            <ArchIcon name="down" size={14} strokeWidth={2.4} color={onBand ? Colors.textInverse : Colors.text} />
+          </View>
+        </View>
+      </TouchableOpacity>
+      <RoundButton onPress={() => nav.navigate('Saved')} label="Saved homes" bordered={!onBand}>
+        <ArchIcon name="heart" />
+      </RoundButton>
+    </View>
+  );
+
   return (
     <>
-    <ScrollView style={s.screen} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 36}}>
-      {/* Header */}
-      <View style={s.header}>
-        <View style={s.headerRow}>
-          <View style={{flex: 1, marginRight: 16}}>
-            <Text style={s.greeting}>Hello, {user?.name?.split(' ')[0] || 'there'} 👋</Text>
-            <Text style={s.headline}>Find your{'\n'}perfect place</Text>
+    <ScrollView style={[s.screen, {backgroundColor: theme.soft}]} showsVerticalScrollIndicator={false} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+      {theme.festival ? (
+        <View style={[s.band, {backgroundColor: theme.primary, height: stripHeight + 162}]}>
+          <FestiveStrip festival={theme.festival} />
+          <View style={[s.bandBar, {top: stripHeight + 2}]}>{topBar}</View>
+          <Text
+            style={[s.wish, {top: stripHeight + 54, width: width - 160}]}
+            numberOfLines={2}
+            adjustsFontSizeToFit
+            accessibilityRole="header">
+            {theme.wish}
+          </Text>
+          <View style={s.bandScene} pointerEvents="none">
+            <FestiveScene festival={theme.festival} width={132} />
           </View>
-          <TouchableOpacity>
-            <Image
-              source={{uri: user?.avatar || 'https://randomuser.me/api/portraits/men/1.jpg'}}
-              style={s.avatar}
-            />
-          </TouchableOpacity>
         </View>
-      </View>
+      ) : (
+        <View style={{paddingTop: insets.top + 12}}>
+          <View style={s.plainBar}>{topBar}</View>
+          <Text style={s.headline} accessibilityRole="header">Find the home you'll cross a bridge for</Text>
+        </View>
+      )}
 
       {/* Search */}
-      <View style={s.searchSection}>
-        <View style={s.searchBar}>
-          <Icon name="search" size={22} color={Colors.textTertiary} />
-          <TextInput
-            style={s.searchInput}
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search city, neighbourhood..."
-            placeholderTextColor={Colors.textTertiary}
-          />
-          {query.length > 0 ? (
-            <TouchableOpacity onPress={() => setQuery('')}>
-              <Icon name="close" size={20} color={Colors.textTertiary} />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={s.filterIcon} onPress={() => setShowFilters(true)} activeOpacity={0.8}>
-              <Icon name="tune" size={18} color={Colors.primary} />
-              {activeFilterCount > 0 && (
-                <View style={s.filterBadge}>
-                  <Text style={s.filterBadgeTxt}>{activeFilterCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          )}
-        </View>
+      <View style={[s.searchBar, onBand && s.searchOverlap]}>
+        <ArchIcon name="search" color={Colors.textSecondary} />
+        <TextInput
+          style={s.searchInput}
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search locality or project"
+          placeholderTextColor={Colors.textSecondary}
+          accessibilityLabel="Search locality or project"
+        />
+        {query.length > 0 ? (
+          <TouchableOpacity style={s.clearBtn} onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel="Clear search">
+            <ArchIcon name="close" color={Colors.textSecondary} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[s.filterBtn, {backgroundColor: theme.primary}]}
+            onPress={() => setShowFilters(true)}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Filters">
+            <ArchIcon name="filter" size={18} color={theme.filterIcon} />
+            {activeFilterCount > 0 && (
+              <View style={s.filterBadge}>
+                <Text style={s.filterBadgeTxt}>{activeFilterCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* Type filters */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.filterRow}>
-        {PROPERTY_TYPES.map(t => {
-          const active = activeType === t.key;
+      {/* Quick filters */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chipRow}>
+        {QUICK_FILTERS.map(q => {
+          const active = quickKey === q.key;
           return (
             <TouchableOpacity
-              key={t.key}
-              style={[s.chip, active && s.chipActive]}
-              onPress={() => setActiveType(t.key)}>
-              <Icon name={t.icon} size={18} color={active ? Colors.chipActiveText : Colors.textSecondary} />
-              <Text style={[s.chipTxt, active && s.chipTxtActive]}>{t.label}</Text>
+              key={q.key}
+              style={[s.chip, active && {backgroundColor: theme.primary, borderColor: theme.primary}]}
+              onPress={() => setQuickKey(q.key)}
+              accessibilityRole="button"
+              accessibilityState={{selected: active}}>
+              <Text style={[s.chipTxt, active && s.onBand]}>{q.label}</Text>
             </TouchableOpacity>
           );
         })}
@@ -209,90 +244,49 @@ export const HomeScreen: React.FC = () => {
       {/* Featured */}
       {featured.length > 0 && (
         <>
-          <View style={s.secHeader}>
-            <Text style={s.secTitle}>Featured</Text>
-            <TouchableOpacity onPress={() => goDetail(featured[0])}>
-              <Text style={s.seeAll}>See all</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={s.secTitle} accessibilityRole="header">Featured homes</Text>
           <FlatList
             data={featured}
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{paddingLeft: 24, paddingRight: 10}}
+            contentContainerStyle={s.featuredList}
             keyExtractor={i => i.id}
-            snapToInterval={CARD_W + 16}
+            snapToInterval={252}
             decelerationRate="fast"
             renderItem={({item}) => (
-              <TouchableOpacity style={s.fCard} onPress={() => goDetail(item)} activeOpacity={0.92}>
-                <Image source={{uri: item.images[0]}} style={s.fImg} />
-                <View style={s.fTopRow}>
-                  <View style={s.fBadge}><Text style={s.fBadgeTxt}>Featured</Text></View>
-                  <TouchableOpacity style={s.heartBtn} onPress={() => toggleFav(item.id)}>
-                    <Icon name={item.isFavorite ? 'favorite' : 'favorite-border'} size={18} color={item.isFavorite ? Colors.heart : '#fff'} />
-                  </TouchableOpacity>
+              <TouchableOpacity style={s.fCard} onPress={() => goDetail(item)} activeOpacity={0.92} accessibilityRole="button" accessibilityLabel={`View ${item.title}`}>
+                <View>
+                  <ArchImage uri={item.images[0]} width={236} height={288} />
+                  <PriceTag price={formatPrice(item.price, item.priceUnit)} />
                 </View>
-                <View style={s.fBottom}>
-                  <Text style={s.fPrice}>{formatPrice(item.price, item.priceUnit)}</Text>
-                  <Text style={s.fName} numberOfLines={1}>{item.title}</Text>
-                  <View style={s.fLocRow}>
-                    <Icon name="location-on" size={13} color="rgba(255,255,255,0.7)" />
-                    <Text style={s.fLoc}>{item.city}, {item.state}</Text>
-                  </View>
-                  <View style={s.fStats}>
-                    <View style={s.fStat}><Icon name="king-bed" size={13} color="rgba(255,255,255,0.8)" /><Text style={s.fStatTxt}>{item.bedrooms} Beds</Text></View>
-                    <View style={s.fStat}><Icon name="bathtub" size={13} color="rgba(255,255,255,0.8)" /><Text style={s.fStatTxt}>{item.bathrooms} Baths</Text></View>
-                    <View style={s.fStat}><Icon name="square-foot" size={13} color="rgba(255,255,255,0.8)" /><Text style={s.fStatTxt}>{item.area} sqft</Text></View>
-                  </View>
-                </View>
+                <Text style={s.fName} numberOfLines={1}>{item.title}</Text>
+                <Text style={s.fMeta} numberOfLines={1}>{summary(item)}</Text>
               </TouchableOpacity>
             )}
           />
         </>
       )}
 
-      {/* Near You */}
-      <View style={[s.secHeader, {marginTop: 28}]}>
-        <Text style={s.secTitle}>Near You</Text>
-      </View>
+      {/* All listings, newest first */}
+      <Text style={s.secTitle} accessibilityRole="header">Newest homes</Text>
       {error ? (
         <ErrorState message={error} onRetry={fetchData} />
       ) : all.length === 0 ? (
-        <View style={s.empty}>
-          <Icon name="search-off" size={42} color={Colors.textLight} />
-          <Text style={s.emptyTxt}>No properties match your search</Text>
-        </View>
+        <Text style={s.emptyTxt}>No properties match your search</Text>
       ) : (
-        all.map(item => (
-          <TouchableOpacity key={item.id} style={s.nCard} onPress={() => goDetail(item)} activeOpacity={0.92}>
-            <Image source={{uri: item.images[0]}} style={s.nImg} />
-            <View style={s.nBody}>
-              <View style={s.nTopRow}>
-                <View style={s.nTypeBadge}>
-                  <Text style={s.nTypeTxt}>{item.type.charAt(0).toUpperCase() + item.type.slice(1)}</Text>
-                </View>
-                {item.reviewCount > 0 && (
-                  <View style={s.nRating}>
-                    <Icon name="star" size={14} color={Colors.star} />
-                    <Text style={s.nRatingTxt}>{item.rating}</Text>
-                    <Text style={s.nReviewCnt}>({item.reviewCount})</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={s.nTitle} numberOfLines={1}>{item.title}</Text>
-              <View style={s.nLocRow}>
-                <Icon name="location-on" size={14} color={Colors.primary} />
-                <Text style={s.nLocTxt} numberOfLines={1}>{item.address}, {item.city}</Text>
-              </View>
-              <View style={s.nDiv} />
-              <View style={s.nBotRow}>
-                <Text style={s.nPrice}>{formatPrice(item.price, item.priceUnit)}</Text>
-                <View style={s.nStatRow}>
-                  <View style={s.nStatChip}><Text style={s.nStatTxt}>{item.bedrooms} bed</Text></View>
-                  <View style={s.nStatChip}><Text style={s.nStatTxt}>{item.bathrooms} bath</Text></View>
-                  <View style={s.nStatChip}><Text style={s.nStatTxt}>{item.area} sqft</Text></View>
-                </View>
-              </View>
+        all.map((item, index) => (
+          <TouchableOpacity
+            key={item.id}
+            style={[s.row, index < all.length - 1 && s.rowLine]}
+            onPress={() => goDetail(item)}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={`View ${item.title}`}>
+            <ArchImage uri={item.images[0]} width={92} height={92} footRadius={10} />
+            <View style={s.rowBody}>
+              <Text style={s.rowPrice}>{formatPrice(item.price, item.priceUnit)}</Text>
+              <Text style={s.rowName} numberOfLines={1}>{item.title}</Text>
+              <Text style={s.rowMeta} numberOfLines={1}>{summary(item)}</Text>
             </View>
           </TouchableOpacity>
         ))
@@ -315,10 +309,8 @@ export const HomeScreen: React.FC = () => {
       filters={filters}
       onApply={newFilters => {
         setFilters(newFilters);
-        // Also sync the type chip bar with filter type
-        if (newFilters.type) {
-          setActiveType(newFilters.type);
-        }
+        // Keeps the chips in step with what the filter sheet just chose
+        setQuickKey(newFilters.type === 'villa' ? 'villa' : 'all');
       }}
     />
     </>
@@ -326,60 +318,44 @@ export const HomeScreen: React.FC = () => {
 };
 
 const s = StyleSheet.create({
-  screen: {flex: 1, backgroundColor: Colors.background},
-  header: {backgroundColor: Colors.primary, paddingTop: 56, paddingBottom: 24, paddingHorizontal: 24, borderBottomLeftRadius: 24, borderBottomRightRadius: 24},
-  headerRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
-  greeting: {fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.7)', marginBottom: 6},
-  headline: {fontSize: 26, fontWeight: '800', color: '#fff', lineHeight: 33, letterSpacing: -0.3},
-  avatar: {width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: 'rgba(255,255,255,0.35)', backgroundColor: Colors.borderLight},
-  searchSection: {paddingHorizontal: 24, paddingTop: 20, paddingBottom: 8},
-  searchBar: {flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, borderRadius: 14, paddingHorizontal: 16, height: 52, gap: 12, shadowColor: Colors.shadowDark, shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.8, shadowRadius: 12, elevation: 5},
-  searchInput: {flex: 1, fontSize: 15, color: Colors.text},
-  filterIcon: {width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center', position: 'relative' as const},
-  filterBadge: {position: 'absolute' as const, top: -4, right: -4, width: 18, height: 18, borderRadius: 9, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center'},
-  filterBadgeTxt: {fontSize: 10, fontWeight: '700', color: Colors.textInverse},
-  filterRow: {paddingHorizontal: 24, gap: 10, marginTop: 12, marginBottom: 4},
-  chip: {flexDirection: 'row', alignItems: 'center', gap: 7, height: 40, paddingHorizontal: 16, borderRadius: 20, backgroundColor: Colors.chipBg, borderWidth: 1.5, borderColor: Colors.chipBorder},
-  chipActive: {backgroundColor: Colors.chipActiveBg, borderColor: Colors.chipActiveBg},
-  chipTxt: {fontSize: 13, fontWeight: '600', color: Colors.textSecondary},
-  chipTxtActive: {color: Colors.chipActiveText},
-  secHeader: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginTop: 20, marginBottom: 16},
-  secTitle: {fontSize: 20, fontWeight: '700', color: Colors.text},
-  seeAll: {fontSize: 14, fontWeight: '600', color: Colors.primaryMedium},
-  fCard: {width: CARD_W, height: 240, borderRadius: 18, overflow: 'hidden', marginRight: 16, backgroundColor: Colors.borderLight},
-  fImg: {width: '100%', height: '100%'},
-  fTopRow: {position: 'absolute', top: 14, left: 14, right: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
-  fBadge: {backgroundColor: Colors.secondary, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8},
-  fBadgeTxt: {fontSize: 11, fontWeight: '700', color: '#fff'},
-  heartBtn: {width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center'},
-  fBottom: {position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, backgroundColor: 'rgba(0,0,0,0.45)', borderBottomLeftRadius: 18, borderBottomRightRadius: 18},
-  fPrice: {fontSize: 20, fontWeight: '800', color: '#fff', marginBottom: 3},
-  fName: {fontSize: 15, fontWeight: '600', color: '#fff', marginBottom: 4},
-  fLocRow: {flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 10},
-  fLoc: {fontSize: 12, color: 'rgba(255,255,255,0.7)'},
-  fStats: {flexDirection: 'row', gap: 14},
-  fStat: {flexDirection: 'row', alignItems: 'center', gap: 4},
-  fStatTxt: {fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.85)'},
-  nCard: {backgroundColor: Colors.surface, borderRadius: 16, overflow: 'hidden', marginHorizontal: 24, marginBottom: 16, shadowColor: Colors.shadow, shadowOffset: {width: 0, height: 4}, shadowOpacity: 1, shadowRadius: 12, elevation: 3},
-  nImg: {width: '100%', height: 170, backgroundColor: Colors.borderLight},
-  nBody: {padding: 16},
-  nTopRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8},
-  nTypeBadge: {backgroundColor: Colors.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8},
-  nTypeTxt: {fontSize: 11, fontWeight: '700', color: Colors.primary},
-  nRating: {flexDirection: 'row', alignItems: 'center', gap: 4},
-  nRatingTxt: {fontSize: 13, fontWeight: '700', color: Colors.text},
-  nReviewCnt: {fontSize: 12, color: Colors.textSecondary},
-  nTitle: {fontSize: 17, fontWeight: '700', color: Colors.text, marginBottom: 6},
-  nLocRow: {flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 12},
-  nLocTxt: {fontSize: 13, color: Colors.textSecondary, flex: 1},
-  nDiv: {height: StyleSheet.hairlineWidth, backgroundColor: Colors.divider, marginBottom: 12},
-  nBotRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
-  nPrice: {fontSize: 19, fontWeight: '800', color: Colors.text},
-  nStatRow: {flexDirection: 'row', gap: 6},
-  nStatChip: {backgroundColor: Colors.borderLight, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6},
-  nStatTxt: {fontSize: 11, fontWeight: '600', color: Colors.textSecondary},
-  empty: {alignItems: 'center', paddingVertical: 48},
-  emptyTxt: {fontSize: 15, color: Colors.textSecondary, marginTop: 12},
-  moreBtn: {marginHorizontal: 24, height: 48, borderRadius: 12, borderWidth: 1.5, borderColor: Colors.chipBorder, alignItems: 'center', justifyContent: 'center'},
-  moreTxt: {fontSize: 14, fontWeight: '600', color: Colors.primary},
+  screen: {flex: 1},
+  center: {justifyContent: 'center', alignItems: 'center'},
+  content: {paddingBottom: 36},
+  onBand: {color: Colors.textInverse},
+  band: {overflow: 'hidden'},
+  bandBar: {position: 'absolute', left: 20, right: 20},
+  // Sits clear of the search bar, which overlaps the bottom of the band
+  bandScene: {position: 'absolute', right: 4, bottom: 30},
+  wish: {position: 'absolute', left: 20, fontFamily: Fonts.heavy, fontSize: 30, lineHeight: 32, letterSpacing: -0.6, color: Colors.textInverse},
+  plainBar: {paddingHorizontal: 20},
+  topBar: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
+  cityBtn: {flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44},
+  cityHint: {fontFamily: Fonts.medium, fontSize: 12, color: Colors.textSecondary},
+  cityRow: {flexDirection: 'row', alignItems: 'center', gap: 4},
+  cityName: {fontFamily: Fonts.bold, fontSize: 16, color: Colors.text},
+  headline: {marginTop: 22, marginBottom: 16, marginHorizontal: 20, fontFamily: Fonts.heavy, fontSize: 36, lineHeight: 38, letterSpacing: -1, color: Colors.text},
+  searchBar: {flexDirection: 'row', alignItems: 'center', gap: 10, height: 52, marginHorizontal: 20, paddingLeft: 16, paddingRight: 6, borderWidth: 1, borderColor: Colors.border, borderRadius: 16, backgroundColor: Colors.surface},
+  searchOverlap: {marginTop: -26},
+  searchInput: {flex: 1, minWidth: 0, fontFamily: Fonts.regular, fontSize: 15, color: Colors.text},
+  clearBtn: {width: 40, height: 40, alignItems: 'center', justifyContent: 'center'},
+  filterBtn: {width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center'},
+  filterBadge: {position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: 9, backgroundColor: Colors.gold, alignItems: 'center', justifyContent: 'center'},
+  filterBadgeTxt: {fontFamily: Fonts.bold, fontSize: 10, color: Colors.primary},
+  chipRow: {paddingHorizontal: 20, paddingTop: 14, gap: 8},
+  chip: {height: 44, paddingHorizontal: 16, justifyContent: 'center', borderRadius: 22, borderWidth: 1, borderColor: Colors.textLight, backgroundColor: Colors.surface},
+  chipTxt: {fontFamily: Fonts.semibold, fontSize: 14, color: Colors.text},
+  secTitle: {marginTop: 28, marginBottom: 14, marginHorizontal: 20, fontFamily: Fonts.display, fontSize: 22, letterSpacing: -0.2, color: Colors.text},
+  featuredList: {paddingHorizontal: 20},
+  fCard: {width: 236, marginRight: 16},
+  fName: {marginTop: 12, fontFamily: Fonts.bold, fontSize: 17, color: Colors.text},
+  fMeta: {marginTop: 2, fontFamily: Fonts.regular, fontSize: 14, color: Colors.textSecondary},
+  row: {flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: 20, paddingVertical: 12},
+  rowLine: {borderBottomWidth: 1, borderBottomColor: Colors.border},
+  rowBody: {flex: 1, minWidth: 0},
+  rowPrice: {fontFamily: Fonts.display, fontSize: 19, color: Colors.text},
+  rowName: {marginTop: 2, fontFamily: Fonts.semibold, fontSize: 15, color: Colors.text},
+  rowMeta: {marginTop: 2, fontFamily: Fonts.regular, fontSize: 13, color: Colors.textSecondary},
+  emptyTxt: {marginHorizontal: 20, paddingVertical: 24, fontFamily: Fonts.regular, fontSize: 15, color: Colors.textSecondary},
+  moreBtn: {marginHorizontal: 20, marginTop: 12, height: 48, borderRadius: 14, borderWidth: 1, borderColor: Colors.textLight, alignItems: 'center', justifyContent: 'center'},
+  moreTxt: {fontFamily: Fonts.semibold, fontSize: 14, color: Colors.text},
 });

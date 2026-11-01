@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   ViewStyle,
 } from 'react-native';
+import {useTheme} from '../context/ThemeContext';
 import {Colors, Typography, Spacing, BorderRadius} from '../theme';
 
 interface ButtonProps {
@@ -29,9 +30,11 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   icon,
 }) => {
+  const theme = useTheme();
   const buttonStyles = [
     styles.base,
     styles[variant],
+    variant === 'primary' && {backgroundColor: theme.accent},
     styles[`size_${size}`],
     disabled && styles.disabled,
     style,
@@ -41,6 +44,7 @@ export const Button: React.FC<ButtonProps> = ({
     styles.text,
     styles[`text_${variant}`],
     styles[`textSize_${size}`],
+    variant === 'primary' && {color: theme.onAccent},
     disabled && styles.textDisabled,
   ];
 
@@ -56,7 +60,7 @@ export const Button: React.FC<ButtonProps> = ({
       accessibilityState={{disabled: disabled || loading}}>
       {loading ? (
         <ActivityIndicator
-          color={variant === 'outline' ? Colors.primary : Colors.textInverse}
+          color={variant === 'primary' ? theme.onAccent : variant === 'outline' ? Colors.primary : Colors.textInverse}
           size="small"
         />
       ) : (
@@ -75,7 +79,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
   },
   primary: {
     backgroundColor: Colors.primary,

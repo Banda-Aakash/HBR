@@ -20,7 +20,7 @@ import {
   TenancyState,
 } from '../types/rental';
 import {RootStackParamList} from '../types';
-import {Colors, Typography, Spacing, BorderRadius} from '../theme';
+import {Colors, Typography, Spacing, BorderRadius, Fonts} from '../theme';
 
 // Lightweight guard evaluator that works with ApiRental data
 function evaluateGuards(rental: ApiRental) {
@@ -174,7 +174,7 @@ export const TenancyDetailScreen: React.FC<Props> = ({navigation, route}) => {
                   <Text
                     style={[
                       styles.timelineLabel,
-                      isCurrent && {color: stateColor, fontWeight: '700'},
+                      isCurrent && {color: stateColor, fontFamily: Fonts.bold},
                       isPast && {color: Colors.textSecondary},
                     ]}>
                     {TENANCY_STATE_LABELS[state]}
@@ -845,7 +845,7 @@ const styles = StyleSheet.create({
   inspectionTypeText: {
     ...Typography.small,
     color: Colors.primary,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   inspectionDate: {
     ...Typography.caption,
@@ -875,7 +875,7 @@ const styles = StyleSheet.create({
   },
   conditionText: {
     ...Typography.small,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
     textTransform: 'capitalize',
   },
 

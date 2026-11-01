@@ -7,6 +7,8 @@ import {Alert} from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import {HomeScreen} from '../src/screens/HomeScreen';
 import {AuthProvider} from '../src/context/AuthContext';
+import {ThemeContext as FestivalContext} from '../src/context/ThemeContext';
+import {FESTIVALS} from '../src/theme';
 import {propertiesApi} from '../src/api/client';
 
 const {act} = ReactTestRenderer;
@@ -107,7 +109,33 @@ test('hides the Featured section when nothing is featured', async () => {
   jest.spyOn(propertiesApi, 'list').mockResolvedValue(page([]) as any);
   const renderer = await renderHome();
 
-  expect(texts(renderer)).not.toContain('See all');
+  expect(texts(renderer)).not.toContain('Featured homes');
+});
+
+test('a BHK chip filters by bedrooms and Villas by type', async () => {
+  const list = jest.spyOn(propertiesApi, 'list').mockResolvedValue(page([home('h1', 'Lake View')]) as any);
+  const renderer = await renderHome();
+
+  await press(renderer, '2 BHK');
+  expect(list).toHaveBeenLastCalledWith(expect.objectContaining({bedrooms: 2, page: 1}));
+
+  await press(renderer, 'Villas');
+  expect(list).toHaveBeenLastCalledWith(expect.objectContaining({type: 'villa', bedrooms: undefined}));
+});
+
+test('wears the festival when one is on', async () => {
+  jest.spyOn(propertiesApi, 'list').mockResolvedValue(page([]) as any);
+  let renderer!: ReactTestRenderer.ReactTestRenderer;
+  await act(async () => {
+    renderer = ReactTestRenderer.create(
+      <FestivalContext value={FESTIVALS.diwali}>
+        <HomeScreen />
+      </FestivalContext>,
+    );
+  });
+
+  expect(texts(renderer)).toContain('Happy Diwali');
+  expect(texts(renderer)).not.toContain('cross a bridge');
 });
 
 test('loads the next page onto the end of the list', async () => {

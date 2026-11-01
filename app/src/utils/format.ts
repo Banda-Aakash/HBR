@@ -22,3 +22,17 @@ export function toDateString(date: Date): string {
 export function parseDate(dateString: string): Date {
   return new Date(`${dateString}T00:00:00`);
 }
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** A visit day as "Tue 3 Nov" */
+export function formatVisitDay(dateString: string): string {
+  const date = parseDate(dateString);
+  return `${WEEKDAYS[date.getDay()]} ${date.getDate()} ${MONTHS[date.getMonth()]}`;
+}
+
+/** Floor area as "2,800 sq ft" */
+export function formatArea(area: number, unit?: string): string {
+  return `${area.toLocaleString('en-IN')} ${unit === 'sqm' ? 'sq m' : 'sq ft'}`;
+}

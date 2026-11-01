@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {propertiesApi} from '../api/client';
-import {Colors} from '../theme';
+import {Colors, Fonts} from '../theme';
 
 const {height: SCREEN_H} = Dimensions.get('window');
 
@@ -258,15 +258,15 @@ const s = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.divider,
   },
-  headerTitle: {fontSize: 20, fontWeight: '700', color: Colors.text},
-  resetTxt: {fontSize: 14, fontWeight: '600', color: Colors.primary},
+  headerTitle: {fontSize: 20, fontFamily: Fonts.bold, color: Colors.text},
+  resetTxt: {fontSize: 14, fontFamily: Fonts.semibold, color: Colors.primary},
   scroll: {paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8},
 
   // Section
   section: {marginBottom: 24},
   sectionTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
     color: Colors.text,
     marginBottom: 12,
     textTransform: 'uppercase',
@@ -289,7 +289,7 @@ const s = StyleSheet.create({
     backgroundColor: Colors.chipActiveBg,
     borderColor: Colors.chipActiveBg,
   },
-  pillTxt: {fontSize: 13, fontWeight: '600', color: Colors.textSecondary},
+  pillTxt: {fontSize: 13, fontFamily: Fonts.semibold, color: Colors.textSecondary},
   pillTxtActive: {color: Colors.chipActiveText},
 
   // Sort
@@ -305,8 +305,8 @@ const s = StyleSheet.create({
   sortRowActive: {
     backgroundColor: Colors.primaryLight,
   },
-  sortTxt: {fontSize: 15, color: Colors.textSecondary, flex: 1},
-  sortTxtActive: {color: Colors.primary, fontWeight: '600'},
+  sortTxt: {fontFamily: Fonts.regular, fontSize: 15, color: Colors.textSecondary, flex: 1},
+  sortTxtActive: {color: Colors.primary, fontFamily: Fonts.semibold},
 
   // Bottom
   bottom: {
@@ -327,7 +327,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cancelBtnTxt: {fontSize: 15, fontWeight: '600', color: Colors.text},
+  cancelBtnTxt: {fontSize: 15, fontFamily: Fonts.semibold, color: Colors.text},
   applyBtn: {
     flex: 2,
     height: 50,
@@ -338,5 +338,5 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
   },
-  applyBtnTxt: {fontSize: 15, fontWeight: '700', color: Colors.textInverse},
+  applyBtnTxt: {fontSize: 15, fontFamily: Fonts.bold, color: Colors.textInverse},
 });

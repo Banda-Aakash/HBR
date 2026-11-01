@@ -13,7 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useAuth} from '../context/AuthContext';
-import {Colors, Typography, Spacing} from '../theme';
+import {Colors, Typography, Spacing, Fonts} from '../theme';
 import {AuthStackParamList} from '../types';
 
 type Props = {
@@ -227,12 +227,12 @@ const styles = StyleSheet.create({
   },
   stepBadgeText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
     color: Colors.primary,
   },
   title: {
     fontSize: 26,
-    fontWeight: '800',
+    fontFamily: Fonts.heavy,
     color: Colors.text,
     letterSpacing: -0.5,
     marginBottom: 6,
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   fieldGroup: {marginBottom: 16},
   label: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
     color: Colors.text,
     marginBottom: 8,
   },
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     color: Colors.text,
-    fontWeight: '400',
+    fontFamily: Fonts.regular,
   },
   primaryBtn: {
     flexDirection: 'row',
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
     color: '#fff',
   },
   terms: {
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
-  termsLink: {color: Colors.primary, fontWeight: '500'},
+  termsLink: {color: Colors.primary, fontFamily: Fonts.medium},
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',

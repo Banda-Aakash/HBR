@@ -16,7 +16,7 @@ import {RouteProp} from '@react-navigation/native';
 import {Button} from '../components';
 import {rentalsApi, ApiRental} from '../api/client';
 import {RootStackParamList} from '../types';
-import {Colors, Typography, Spacing, BorderRadius} from '../theme';
+import {Colors, Typography, Spacing, BorderRadius, Fonts} from '../theme';
 
 const {width} = Dimensions.get('window');
 
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
   processStepNumberText: {
     ...Typography.small,
     color: Colors.primary,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   processStepLabel: {
     ...Typography.bodyMedium,

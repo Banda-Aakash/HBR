@@ -59,7 +59,7 @@ async function requestVisit() {
   const renderer = await renderScreen();
   await press(renderer, '4'); // Tomorrow, 4 November
   await press(renderer, '10:00 AM');
-  await press(renderer, 'Request Visit');
+  await press(renderer, 'Send request');
   return renderer;
 }
 
@@ -146,7 +146,7 @@ test('the confirmation page says requested, not confirmed', async () => {
   });
 
   const page = texts(renderer);
-  expect(page).toContain('Visit Requested');
-  expect(page).toContain('Wednesday, November 4, 2026');
+  expect(page).toContain('Visit requested');
+  expect(page).toContain('Wed 4 Nov');
   expect(page).not.toContain('Confirmed');
 });

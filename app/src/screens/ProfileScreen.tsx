@@ -3,39 +3,38 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   ScrollView,
   Alert,
   Modal,
   TextInput,
+  Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {ArchIcon, ArchImage, FestiveStrip, useStripHeight} from '../components/Arch';
 import {useAuth} from '../context/AuthContext';
 import {useRole} from '../context/RoleContext';
+import {useTheme} from '../context/ThemeContext';
 import {favoritesApi, bookingsApi} from '../api/client';
-import {FEATURES} from '../config';
-import {Colors, Typography, Spacing, BorderRadius} from '../theme';
+import {FEATURES, SUPPORT_PHONE} from '../config';
+import {Colors, Fonts, Typography, Spacing, BorderRadius} from '../theme';
 import {RootStackParamList} from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-// ── Menu sections with grouped items ──
-const accountItems = [
-  {
-    icon: 'event-note',
-    label: 'My Bookings',
-    subtitle: 'Upcoming and past visits',
-    nav: 'MyBookings' as string | undefined,
-  },
-];
+const initialsOf = (name?: string) =>
+  (name || '?').split(' ').map(word => word[0]).slice(0, 2).join('').toUpperCase();
 
 export const ProfileScreen: React.FC = () => {
   const nav = useNavigation<Nav>();
   const {user, logout, deleteAccount} = useAuth();
   const {isOwner, toggleMode} = useRole();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const stripHeight = useStripHeight();
   const [favCount, setFavCount] = useState(0);
   const [bookingCount, setBookingCount] = useState(0);
   const [showDelete, setShowDelete] = useState(false);
@@ -68,94 +67,62 @@ export const ProfileScreen: React.FC = () => {
     }
   };
 
-  const renderMenuItem = (
-    item: {icon: string; label: string; subtitle: string; nav?: string},
-    isLast: boolean,
-  ) => (
-    <TouchableOpacity
-      key={item.label}
-      style={[styles.menuItem, !isLast && styles.menuItemBorder]}
-      activeOpacity={0.6}
-      onPress={() => item.nav ? nav.navigate(item.nav as any) : undefined}
-      accessible
-      accessibilityRole="button"
-      accessibilityLabel={item.label}>
-      <View style={styles.menuIcon}>
-        <Icon name={item.icon} size={21} color={Colors.textSecondary} />
-      </View>
-      <View style={styles.menuTextContainer}>
-        <Text style={styles.menuLabel}>{item.label}</Text>
-        <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
-      </View>
-      <Icon name="chevron-right" size={20} color={Colors.borderLight} />
-    </TouchableOpacity>
-  );
+  const openHelp = () => {
+    Linking.openURL(`https://wa.me/${SUPPORT_PHONE}`).catch(() =>
+      Alert.alert('WhatsApp not available', `Please contact us at +${SUPPORT_PHONE}.`),
+    );
+  };
 
-  const renderSection = (
-    title: string,
-    items: {icon: string; label: string; subtitle: string; nav?: string}[],
-  ) => (
-    <View style={styles.section}>
-      <Text style={styles.sectionLabel}>{title}</Text>
-      <View style={styles.sectionCard}>
-        {items.map((item, i) => renderMenuItem(item, i === items.length - 1))}
-      </View>
-    </View>
-  );
+  const menu = [
+    {label: 'Saved homes', onPress: () => nav.navigate('Saved')},
+    {label: 'Your visits', onPress: () => nav.navigate('MyBookings')},
+    {label: 'Help and support', onPress: openHelp},
+    {label: 'Sign out', onPress: handleLogout},
+  ];
+
+  const onBand = !!theme.festival;
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, {backgroundColor: theme.soft}]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.scrollContent}>
-      {/* ── Hero header with gradient feel ── */}
-      <View style={styles.heroContainer}>
-        <View style={styles.heroBg} />
-        <View style={styles.heroContent}>
-          {/* Top bar */}
-          <View style={styles.topBar}>
-            <Text style={styles.screenTitle}>Profile</Text>
+      <View
+        style={[
+          styles.hero,
+          theme.festival
+            ? {backgroundColor: theme.primary, paddingTop: stripHeight + 16}
+            : {paddingTop: insets.top + 16},
+        ]}>
+        {theme.festival ? <FestiveStrip festival={theme.festival} /> : null}
+        {user?.avatar ? (
+          <ArchImage uri={user.avatar} width={76} height={86} footRadius={10} />
+        ) : (
+          <View style={[styles.initials, {backgroundColor: theme.festival ? theme.accent : theme.primary}]}>
+            <Text style={[styles.initialsText, {color: theme.festival ? theme.onAccent : Colors.gold}]}>
+              {initialsOf(user?.name)}
+            </Text>
           </View>
-
-          {/* Avatar + Info */}
-          <View style={styles.profileRow}>
-            <View style={styles.avatarContainer}>
-              <Image
-                source={{
-                  uri:
-                    user?.avatar ||
-                    'https://randomuser.me/api/portraits/men/1.jpg',
-                }}
-                style={styles.avatar}
-              />
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.userName}>
-                {user?.name || 'Guest User'}
-              </Text>
-              <Text style={styles.userEmail}>
-                {user?.email || 'guest@example.com'}
-              </Text>
-            </View>
-          </View>
+        )}
+        <View style={styles.profileInfo}>
+          <Text style={[styles.userName, onBand && styles.onBand]} numberOfLines={1} adjustsFontSizeToFit>
+            {user?.name || 'Guest User'}
+          </Text>
+          <Text style={[styles.userEmail, onBand && styles.onBand]} numberOfLines={1}>
+            {theme.wish || user?.email}
+          </Text>
         </View>
+      </View>
 
-        {/* Stats card overlapping hero */}
-        <View style={styles.statsCard}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>
-              {favCount}
-            </Text>
-            <Text style={styles.statLabel}>Saved</Text>
-          </View>
-          <View style={styles.statSep} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>
-              {bookingCount}
-            </Text>
-            <Text style={styles.statLabel}>Bookings</Text>
-          </View>
+      <View style={styles.statsCard}>
+        <View style={styles.statItem}>
+          <Text style={[styles.statNumber, {color: theme.ink}]}>{favCount}</Text>
+          <Text style={styles.statLabel}>Saved</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={[styles.statNumber, {color: theme.ink}]}>{bookingCount}</Text>
+          <Text style={styles.statLabel}>Visits</Text>
         </View>
       </View>
 
@@ -238,21 +205,21 @@ export const ProfileScreen: React.FC = () => {
       </View>
       ) : null}
 
-      {/* ── Menu sections ── */}
-      {renderSection('Account', accountItems)}
-
-      {/* ── Sign out ── */}
+      {/* ── Menu ── */}
       <View style={styles.section}>
-        <TouchableOpacity
-          style={styles.signOutBtn}
-          onPress={handleLogout}
-          activeOpacity={0.7}
-          accessible
-          accessibilityRole="button"
-          accessibilityLabel="Sign out">
-          <Icon name="logout" size={20} color={Colors.error} />
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </TouchableOpacity>
+        <View style={styles.sectionCard}>
+          {menu.map((item, i) => (
+            <TouchableOpacity
+              key={item.label}
+              style={[styles.menuItem, i < menu.length - 1 && styles.menuItemBorder]}
+              activeOpacity={0.6}
+              onPress={item.onPress}
+              accessibilityRole="button">
+              <Text style={styles.menuLabel}>{item.label}</Text>
+              <ArchIcon name="right" size={18} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          ))}
+        </View>
         <TouchableOpacity
           style={styles.deleteLink}
           onPress={() => setShowDelete(true)}
@@ -265,7 +232,7 @@ export const ProfileScreen: React.FC = () => {
 
       {/* ── Footer ── */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>RealApp v1.0.0</Text>
+        <Text style={styles.footerText}>HomeBridgeReality v1.0.0</Text>
         <View style={styles.footerDot} />
         <Text style={styles.footerText}>Made in India</Text>
       </View>
@@ -311,47 +278,50 @@ export const ProfileScreen: React.FC = () => {
   );
 };
 
-const HERO_HEIGHT = 200;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 24,
   },
+  onBand: {color: Colors.textInverse},
 
-  // ── Hero ──
-  heroContainer: {
-    marginBottom: 44, // half of stats card height for overlap
-  },
-  heroBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: HERO_HEIGHT,
-    backgroundColor: Colors.primary,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-  },
-  heroContent: {
-    paddingTop: Spacing.xxxl + 8,
-    paddingHorizontal: Spacing.xl,
-  },
-  topBar: {
+  // ── Header ──
+  hero: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    gap: 14,
+    paddingHorizontal: 20,
+    paddingBottom: 18,
+    overflow: 'hidden',
   },
-  screenTitle: {
-    ...Typography.h2,
-    color: Colors.textInverse,
+  initials: {
+    width: 76,
+    height: 86,
+    borderTopLeftRadius: 38,
+    borderTopRightRadius: 38,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initialsText: {fontFamily: Fonts.heavy, fontSize: 26},
+  profileInfo: {flex: 1, minWidth: 0},
+  userName: {
+    fontFamily: Fonts.heavy,
+    fontSize: 28,
+    letterSpacing: -0.5,
+    color: Colors.text,
+  },
+  userEmail: {
+    marginTop: 2,
+    fontFamily: Fonts.medium,
+    fontSize: 15,
+    color: Colors.textSecondary,
   },
   deleteLink: {alignItems: 'center', paddingVertical: 14, marginTop: 4},
-  deleteLinkText: {...Typography.small, color: Colors.textSecondary, textDecorationLine: 'underline'},
+  deleteLinkText: {...Typography.caption, color: Colors.textSecondary, textDecorationLine: 'underline'},
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(15,23,42,0.55)',
@@ -359,7 +329,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   modalCard: {backgroundColor: Colors.surface, borderRadius: 16, padding: 20},
-  modalTitle: {fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 8},
+  modalTitle: {fontFamily: Fonts.display, fontSize: 18, color: Colors.text, marginBottom: 8},
   modalBody: {...Typography.body, color: Colors.textSecondary, lineHeight: 21, marginBottom: 14},
   modalInput: {
     borderWidth: 1,
@@ -367,119 +337,51 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    fontFamily: Fonts.regular,
     color: Colors.text,
     marginBottom: 16,
   },
   modalActions: {flexDirection: 'row', justifyContent: 'flex-end', gap: 8},
   modalBtn: {paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10},
   modalBtnDisabled: {opacity: 0.5},
-  modalCancelText: {color: Colors.textSecondary, fontWeight: '600'},
+  modalCancelText: {fontFamily: Fonts.semibold, color: Colors.textSecondary},
   modalDeleteBtn: {backgroundColor: Colors.error},
-  modalDeleteText: {color: Colors.textInverse, fontWeight: '700'},
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.xl + 8,
-  },
-  avatarContainer: {
-    position: 'relative',
-  },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.5)',
-    backgroundColor: Colors.borderLight,
-  },
-  editAvatarBtn: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: Colors.primaryDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Colors.primary,
-  },
-  profileInfo: {
-    marginLeft: Spacing.base,
-    flex: 1,
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.textInverse,
-    marginBottom: 2,
-  },
-  userEmail: {
-    ...Typography.body,
-    color: 'rgba(255,255,255,0.75)',
-    marginBottom: 6,
-  },
-  verifiedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  verifiedText: {
-    ...Typography.small,
-    color: '#34D399',
-    fontWeight: '600',
-  },
+  modalDeleteText: {fontFamily: Fonts.bold, color: Colors.textInverse},
 
-  // ── Stats Card (overlapping hero) ──
+  // ── Stats ──
   statsCard: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: Colors.surface,
-    marginHorizontal: Spacing.xl,
+    marginTop: 16,
+    marginHorizontal: 20,
+    marginBottom: 14,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
     borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 6,
+    backgroundColor: Colors.surface,
   },
   statItem: {
     alignItems: 'center',
     flex: 1,
   },
   statNumber: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: Colors.text,
-    letterSpacing: -0.5,
+    fontFamily: Fonts.display,
+    fontSize: 26,
   },
   statLabel: {
-    ...Typography.caption,
+    fontFamily: Fonts.regular,
+    fontSize: 14,
     color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  statSep: {
-    width: 1,
-    height: 32,
-    backgroundColor: Colors.borderLight,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
   },
 
   // ── Section ──
   section: {
-    paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.lg,
+    paddingHorizontal: 20,
+    marginBottom: Spacing.sm,
   },
   sectionLabel: {
+    fontFamily: Fonts.semibold,
     fontSize: 13,
-    fontWeight: '600',
     color: Colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
@@ -489,12 +391,8 @@ const styles = StyleSheet.create({
   sectionCard: {
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
 
   // ── Mode card ──
@@ -558,7 +456,7 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
     color: Colors.textLight,
   },
   toggleTextActive: {
@@ -569,52 +467,18 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    justifyContent: 'space-between',
+    minHeight: 54,
     paddingHorizontal: Spacing.base,
   },
   menuItemBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.borderLight,
-  },
-  menuIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: Colors.borderLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  menuTextContainer: {
-    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   menuLabel: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontFamily: Fonts.semibold,
+    fontSize: 16,
     color: Colors.text,
-    marginBottom: 1,
-  },
-  menuSubtitle: {
-    ...Typography.small,
-    color: Colors.textLight,
-  },
-
-  // ── Sign out ──
-  signOutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    paddingVertical: 15,
-    borderWidth: 1,
-    borderColor: '#FEE2E2',
-  },
-  signOutText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.error,
   },
 
   // ── Footer ──
@@ -626,13 +490,13 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   footerText: {
-    ...Typography.small,
-    color: Colors.textLight,
+    ...Typography.caption,
+    color: Colors.textSecondary,
   },
   footerDot: {
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: Colors.textLight,
+    backgroundColor: Colors.textSecondary,
   },
 });

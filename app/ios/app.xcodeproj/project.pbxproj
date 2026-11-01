@@ -9,21 +9,35 @@
 /* Begin PBXBuildFile section */
 		0C80B921A6F3F58F76C31292 /* libPods-app.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-app.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		1E09DD92A4C0862019FFC5CE /* InstrumentSans-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A3D32F8EC95EBF5C10816659 /* InstrumentSans-SemiBold.ttf */; };
+		29B8BC8D09EFDE358DB4863F /* BricolageGrotesque-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 887CAA7B1A7CDE1C920FF2DE /* BricolageGrotesque-ExtraBold.ttf */; };
 		2CC9A60AE3659BA3CDBD421A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		32C121FE8B5A531976246B55 /* InstrumentSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1CB3ACBF3B1B90A7C28CF497 /* InstrumentSans-Bold.ttf */; };
+		58D1B1DE25576D13EF7E7972 /* InstrumentSans-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0E320D37E5333D463E3F7771 /* InstrumentSans-Medium.ttf */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
+		7AB55E5AFC1A43A97FDB9911 /* InstrumentSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A3364C5466FBFBDE6AD36054 /* InstrumentSans-Regular.ttf */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		9E4414D9F935E0FDD4352B3B /* BricolageGrotesque-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1285CB208303459C5E5DE253 /* BricolageGrotesque-SemiBold.ttf */; };
+		AA5C7D074715E577537576CC /* BricolageGrotesque-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 20F528B9736B0C057BEA9F78 /* BricolageGrotesque-Bold.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0E320D37E5333D463E3F7771 /* InstrumentSans-Medium.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "InstrumentSans-Medium.ttf"; sourceTree = "<group>"; };
+		1285CB208303459C5E5DE253 /* BricolageGrotesque-SemiBold.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "BricolageGrotesque-SemiBold.ttf"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = app.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = app/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = app/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = app/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		1CB3ACBF3B1B90A7C28CF497 /* InstrumentSans-Bold.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "InstrumentSans-Bold.ttf"; sourceTree = "<group>"; };
+		20F528B9736B0C057BEA9F78 /* BricolageGrotesque-Bold.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "BricolageGrotesque-Bold.ttf"; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-app.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-app.debug.xcconfig"; path = "Target Support Files/Pods-app/Pods-app.debug.xcconfig"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-app.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-app.release.xcconfig"; path = "Target Support Files/Pods-app/Pods-app.release.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-app.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-app.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = app/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = app/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		887CAA7B1A7CDE1C920FF2DE /* BricolageGrotesque-ExtraBold.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "BricolageGrotesque-ExtraBold.ttf"; sourceTree = "<group>"; };
+		A3364C5466FBFBDE6AD36054 /* InstrumentSans-Regular.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "InstrumentSans-Regular.ttf"; sourceTree = "<group>"; };
+		A3D32F8EC95EBF5C10816659 /* InstrumentSans-SemiBold.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "InstrumentSans-SemiBold.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -75,6 +89,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				EFAEF1B03B4DC55D019537FF /* Fonts */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -96,6 +111,21 @@
 				5709B34CF0A7D63546082F79 /* Pods-app.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		EFAEF1B03B4DC55D019537FF /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				20F528B9736B0C057BEA9F78 /* BricolageGrotesque-Bold.ttf */,
+				887CAA7B1A7CDE1C920FF2DE /* BricolageGrotesque-ExtraBold.ttf */,
+				1285CB208303459C5E5DE253 /* BricolageGrotesque-SemiBold.ttf */,
+				1CB3ACBF3B1B90A7C28CF497 /* InstrumentSans-Bold.ttf */,
+				0E320D37E5333D463E3F7771 /* InstrumentSans-Medium.ttf */,
+				A3364C5466FBFBDE6AD36054 /* InstrumentSans-Regular.ttf */,
+				A3D32F8EC95EBF5C10816659 /* InstrumentSans-SemiBold.ttf */,
+			);
+			name = Fonts;
+			path = ../src/assets/fonts;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -161,6 +191,13 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				2CC9A60AE3659BA3CDBD421A /* PrivacyInfo.xcprivacy in Resources */,
+				AA5C7D074715E577537576CC /* BricolageGrotesque-Bold.ttf in Resources */,
+				29B8BC8D09EFDE358DB4863F /* BricolageGrotesque-ExtraBold.ttf in Resources */,
+				9E4414D9F935E0FDD4352B3B /* BricolageGrotesque-SemiBold.ttf in Resources */,
+				32C121FE8B5A531976246B55 /* InstrumentSans-Bold.ttf in Resources */,
+				58D1B1DE25576D13EF7E7972 /* InstrumentSans-Medium.ttf in Resources */,
+				7AB55E5AFC1A43A97FDB9911 /* InstrumentSans-Regular.ttf in Resources */,
+				1E09DD92A4C0862019FFC5CE /* InstrumentSans-SemiBold.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -92,6 +92,7 @@ export type RootStackParamList = {
   TenancyTransition: {tenancyId: string};
   RentalPropertyDetail: {tenancyId: string};
   MyBookings: undefined;
+  Saved: undefined;
   AddProperty: undefined;
 };
 
@@ -100,12 +101,11 @@ export type AuthStackParamList = {
   Register: undefined;
 };
 
-// Owner/Investor sees: Home, Bookings, Rentals (or Saved while rentals are hidden), Interiors, Profile
+// Owner/Investor sees: Home, Bookings, Rentals (while that feature is on), Interiors, Profile
 export type OwnerTabParamList = {
   Home: undefined;
   Bookings: undefined;
   Rentals: undefined;
-  Saved: undefined;
   Interiors: undefined;
   Profile: undefined;
 };

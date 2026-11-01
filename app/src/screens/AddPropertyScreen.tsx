@@ -13,7 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {rentalsApi} from '../api/client';
-import {Colors, Spacing} from '../theme';
+import {Colors, Spacing, Fonts} from '../theme';
 import {RootStackParamList} from '../types';
 
 type Props = {
@@ -183,7 +183,7 @@ const s = StyleSheet.create({
     borderBottomColor: Colors.divider,
   },
   backBtn: {width: 40, height: 40, borderRadius: 14, backgroundColor: Colors.borderLight, alignItems: 'center', justifyContent: 'center'},
-  headerTitle: {fontSize: 18, fontWeight: '700', color: Colors.text},
+  headerTitle: {fontSize: 18, fontFamily: Fonts.bold, color: Colors.text},
   scroll: {padding: 20, paddingBottom: 100},
 
   infoBanner: {
@@ -195,12 +195,12 @@ const s = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 24,
   },
-  infoTxt: {fontSize: 13, color: Colors.primaryDark, flex: 1, lineHeight: 19},
+  infoTxt: {fontFamily: Fonts.regular, fontSize: 13, color: Colors.primaryDark, flex: 1, lineHeight: 19},
 
-  sectionTitle: {fontSize: 16, fontWeight: '700', color: Colors.text, marginBottom: 14},
+  sectionTitle: {fontSize: 16, fontFamily: Fonts.bold, color: Colors.text, marginBottom: 14},
 
   field: {marginBottom: 16},
-  label: {fontSize: 13, fontWeight: '600', color: Colors.text, marginBottom: 8},
+  label: {fontSize: 13, fontFamily: Fonts.semibold, color: Colors.text, marginBottom: 8},
   req: {color: Colors.error},
   input: {
     backgroundColor: Colors.surface,
@@ -209,6 +209,7 @@ const s = StyleSheet.create({
     borderColor: Colors.border,
     paddingHorizontal: 14,
     height: 48,
+    fontFamily: Fonts.regular,
     fontSize: 15,
     color: Colors.text,
   },
@@ -236,5 +237,5 @@ const s = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  submitTxt: {fontSize: 16, fontWeight: '700', color: '#fff'},
+  submitTxt: {fontSize: 16, fontFamily: Fonts.bold, color: '#fff'},
 });

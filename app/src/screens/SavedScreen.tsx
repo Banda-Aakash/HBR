@@ -1,17 +1,24 @@
 import React, {useCallback, useState} from 'react';
-import {View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity} from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, useWindowDimensions} from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {favoritesApi, ApiProperty} from '../api/client';
-import {PropertyCard} from '../components/PropertyCard';
-import {Colors, Typography, Spacing} from '../theme';
-import {Property, RootStackParamList} from '../types';
+import {ArchIcon, ArchImage, PriceTag, ScreenHeader} from '../components/Arch';
+import {ErrorState} from '../components/ErrorState';
+import {useTheme} from '../context/ThemeContext';
+import {Colors, Fonts} from '../theme';
+import {RootStackParamList} from '../types';
+import {formatPrice} from '../utils/format';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-export const SavedScreen: React.FC = () => {
+const GUTTER = 20;
+const GAP = 14;
+
+export const SavedScreen: React.FC<{showBack?: boolean}> = ({showBack}) => {
   const nav = useNavigation<Nav>();
+  const theme = useTheme();
+  const {width} = useWindowDimensions();
   const [properties, setProperties] = useState<ApiProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,44 +50,50 @@ export const SavedScreen: React.FC = () => {
     }
   };
 
-  const renderEmpty = () => (
-    <View style={s.body}>
-      <View style={s.circle}>
-        <Icon name={error ? 'cloud-off' : 'bookmark-border'} size={44} color={Colors.textLight} />
-      </View>
-      <Text style={s.emptyTitle}>{error ? 'Something went wrong' : 'No saved properties'}</Text>
-      <Text style={s.emptyBody}>
-        {error || 'Save a property from its listing and it will appear here.'}
-      </Text>
-      {error ? (
-        <TouchableOpacity style={s.retryBtn} onPress={load} accessibilityRole="button">
-          <Text style={s.retryText}>Try Again</Text>
-        </TouchableOpacity>
-      ) : null}
-    </View>
-  );
+  const cardWidth = (width - GUTTER * 2 - GAP) / 2;
 
   return (
-    <View style={s.container}>
-      <View style={s.header}>
-        <Text style={s.title}>Saved</Text>
-        <Text style={s.sub}>Properties you've bookmarked</Text>
-      </View>
+    <View style={[s.container, {backgroundColor: theme.soft}]}>
+      <ScreenHeader title="Saved homes" onBack={showBack ? nav.goBack : undefined} />
       {loading ? (
-        <ActivityIndicator style={s.loader} size="large" color={Colors.primary} />
+        <ActivityIndicator style={s.loader} size="large" color={theme.primary} />
+      ) : error && properties.length === 0 ? (
+        <ErrorState message={error} onRetry={load} />
       ) : (
         <FlatList
           data={properties}
           keyExtractor={item => item.id}
+          numColumns={2}
+          columnWrapperStyle={s.column}
           contentContainerStyle={properties.length ? s.list : s.emptyList}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmpty}
+          ListEmptyComponent={
+            <View style={s.body}>
+              <Text style={s.emptyTitle}>No saved homes yet</Text>
+              <Text style={s.emptyBody}>Tap the heart on a home and it will appear here.</Text>
+            </View>
+          }
           renderItem={({item}) => (
-            <PropertyCard
-              property={item as Property}
-              onPress={p => nav.navigate('PropertyDetail', {propertyId: p.id})}
-              onFavorite={removeFavorite}
-            />
+            <TouchableOpacity
+              style={{width: cardWidth}}
+              onPress={() => nav.navigate('PropertyDetail', {propertyId: item.id})}
+              activeOpacity={0.9}
+              accessibilityRole="button"
+              accessibilityLabel={`View ${item.title}`}>
+              <View>
+                <ArchImage uri={item.images[0]} width={cardWidth} height={cardWidth * 1.17} footRadius={12} />
+                <PriceTag price={formatPrice(item.price, item.priceUnit)} small />
+                <TouchableOpacity
+                  style={s.heart}
+                  onPress={() => removeFavorite(item.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove ${item.title} from saved homes`}>
+                  <ArchIcon name="heart" size={17} filled color={Colors.heart} />
+                </TouchableOpacity>
+              </View>
+              <Text style={s.name} numberOfLines={1}>{item.title}</Text>
+              <Text style={s.place} numberOfLines={1}>{item.city} · {item.bedrooms} BHK</Text>
+            </TouchableOpacity>
           )}
         />
       )}
@@ -89,40 +102,15 @@ export const SavedScreen: React.FC = () => {
 };
 
 const s = StyleSheet.create({
-  container: {flex: 1, backgroundColor: Colors.background},
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: Spacing.xxxl + 10,
-    paddingBottom: 12,
-  },
-  title: {fontSize: 28, fontWeight: '800', color: Colors.text, letterSpacing: -0.5},
-  sub: {...Typography.body, color: Colors.textSecondary, marginTop: 2},
+  container: {flex: 1},
   loader: {flex: 1},
-  list: {paddingHorizontal: Spacing.base, paddingBottom: 24},
+  list: {paddingHorizontal: GUTTER, paddingTop: 16, paddingBottom: 24, gap: GAP},
+  column: {gap: GAP},
   emptyList: {flexGrow: 1},
+  heart: {position: 'absolute', right: 8, bottom: 8, width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center'},
+  name: {marginTop: 7, fontFamily: Fonts.bold, fontSize: 15, color: Colors.text},
+  place: {marginTop: 1, fontFamily: Fonts.regular, fontSize: 13, color: Colors.textSecondary},
   body: {flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, paddingBottom: 80},
-  circle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  emptyTitle: {fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 8},
-  emptyBody: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 21,
-  },
-  retryBtn: {
-    marginTop: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: Colors.primary,
-  },
-  retryText: {color: Colors.textInverse, fontWeight: '700'},
+  emptyTitle: {fontFamily: Fonts.display, fontSize: 20, color: Colors.text, marginBottom: 8},
+  emptyBody: {fontFamily: Fonts.regular, fontSize: 15, lineHeight: 22, color: Colors.textSecondary, textAlign: 'center'},
 });

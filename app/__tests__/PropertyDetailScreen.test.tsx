@@ -6,6 +6,9 @@ import React from 'react';
 import {Alert, Linking} from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import {PropertyDetailScreen} from '../src/screens/PropertyDetailScreen';
+import {FestiveStrip} from '../src/components/Arch';
+import {ThemeContext} from '../src/context/ThemeContext';
+import {FESTIVALS} from '../src/theme';
 import {propertiesApi} from '../src/api/client';
 
 const {act} = ReactTestRenderer;
@@ -66,6 +69,31 @@ test('shows a new listing without made-up scores', async () => {
   expect(page).not.toContain('★');
 });
 
+test('shows the price per square foot for homes on sale, not rentals', async () => {
+  expect(JSON.stringify((await renderScreen(listing)).toJSON())).toContain('₹3,750 per sq ft');
+
+  const rental = JSON.stringify((await renderScreen({...listing, priceUnit: 'month'})).toJSON());
+  expect(rental).not.toContain('per sq ft');
+});
+
+test('keeps festive decoration out of the photo gallery', async () => {
+  let renderer!: ReactTestRenderer.ReactTestRenderer;
+  jest.spyOn(propertiesApi, 'getById').mockResolvedValue(listing as any);
+  await act(async () => {
+    renderer = ReactTestRenderer.create(
+      <ThemeContext value={FESTIVALS.diwali}>
+        <PropertyDetailScreen
+          navigation={{goBack: jest.fn(), navigate: jest.fn()} as any}
+          route={{key: 'k', name: 'PropertyDetail', params: {propertyId: 'p1'}}}
+        />
+      </ThemeContext>,
+    );
+  });
+
+  expect(renderer.root.findAllByType(FestiveStrip)).toHaveLength(0);
+  expect(JSON.stringify(renderer.toJSON())).toContain('Happy Diwali');
+});
+
 test('calls the agent', async () => {
   const renderer = await renderScreen(listing);
   await act(async () => {
@@ -93,5 +121,5 @@ test('leaves out contact buttons when no phone was entered', async () => {
 test('leaves out the agent section when no agent was entered', async () => {
   const page = await renderScreen({...listing, agent: {...listing.agent, name: '', phone: ''}});
 
-  expect(JSON.stringify(page.toJSON())).not.toContain('Listed by');
+  expect(JSON.stringify(page.toJSON())).not.toContain('Your agent');
 });

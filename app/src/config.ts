@@ -9,6 +9,9 @@ const PRODUCTION_API_URL = 'https://api.example.com/api';
 
 export const API_URL = __DEV__ ? `http://${DEV_HOST}:3001/api` : PRODUCTION_API_URL;
 
+// The business's WhatsApp and phone number, with country code
+export const SUPPORT_PHONE = '916281889589';
+
 // Features that aren't ready for real users. Turning one on shows it in the app again.
 export const FEATURES = {
   // Rental documents are placeholders with no real upload yet, see TransitionScreen

@@ -18,7 +18,7 @@ import {
   TENANCY_STATE_COLORS,
 } from '../types/rental';
 import {RootStackParamList} from '../types';
-import {Colors, Spacing} from '../theme';
+import {Colors, Spacing, Fonts} from '../theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -218,8 +218,8 @@ const s = StyleSheet.create({
     borderBottomColor: Colors.divider,
   },
   headerLeft: {},
-  title: {fontSize: 28, fontWeight: '800', color: Colors.text, letterSpacing: -0.5},
-  subtitle: {fontSize: 14, color: Colors.textSecondary, marginTop: 3},
+  title: {fontSize: 28, fontFamily: Fonts.heavy, color: Colors.text, letterSpacing: -0.5},
+  subtitle: {fontFamily: Fonts.regular, fontSize: 14, color: Colors.textSecondary, marginTop: 3},
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -229,7 +229,7 @@ const s = StyleSheet.create({
     height: 40,
     borderRadius: 12,
   },
-  addBtnTxt: {fontSize: 14, fontWeight: '600', color: '#fff'},
+  addBtnTxt: {fontSize: 14, fontFamily: Fonts.semibold, color: '#fff'},
 
   /* Filters */
   filterWrap: {
@@ -254,7 +254,7 @@ const s = StyleSheet.create({
   },
   filterBtnTxt: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
     color: Colors.textSecondary,
   },
   filterBtnTxtActive: {
@@ -291,7 +291,7 @@ const s = StyleSheet.create({
     borderTopRightRadius: 8,
     borderBottomRightRadius: 8,
   },
-  ribbonTxt: {fontSize: 11, fontWeight: '700', color: '#fff', letterSpacing: 0.3},
+  ribbonTxt: {fontSize: 11, fontFamily: Fonts.bold, color: '#fff', letterSpacing: 0.3},
   cardContent: {padding: 16},
   nameRow: {
     flexDirection: 'row',
@@ -299,12 +299,12 @@ const s = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 6,
   },
-  cardName: {fontSize: 16, fontWeight: '700', color: Colors.text, flex: 1, marginRight: 10},
-  cardRent: {fontSize: 16, fontWeight: '800', color: Colors.primary},
-  cardRentUnit: {fontSize: 12, fontWeight: '500', color: Colors.textTertiary},
-  cardMeta: {fontSize: 13, color: Colors.textSecondary, marginBottom: 6, lineHeight: 18},
+  cardName: {fontSize: 16, fontFamily: Fonts.bold, color: Colors.text, flex: 1, marginRight: 10},
+  cardRent: {fontSize: 16, fontFamily: Fonts.heavy, color: Colors.primary},
+  cardRentUnit: {fontSize: 12, fontFamily: Fonts.medium, color: Colors.textTertiary},
+  cardMeta: {fontFamily: Fonts.regular, fontSize: 13, color: Colors.textSecondary, marginBottom: 6, lineHeight: 18},
   cardLocRow: {flexDirection: 'row', alignItems: 'center', gap: 2, marginBottom: 16},
-  cardLocTxt: {fontSize: 13, color: Colors.textTertiary},
+  cardLocTxt: {fontFamily: Fonts.regular, fontSize: 13, color: Colors.textTertiary},
 
   /* Card actions */
   cardActions: {
@@ -319,7 +319,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  btnPrimaryTxt: {fontSize: 14, fontWeight: '600', color: '#fff'},
+  btnPrimaryTxt: {fontSize: 14, fontFamily: Fonts.semibold, color: '#fff'},
   btnGhost: {
     flex: 1,
     height: 42,
@@ -331,7 +331,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap: 2,
   },
-  btnGhostTxt: {fontSize: 14, fontWeight: '600', color: Colors.primary},
+  btnGhostTxt: {fontSize: 14, fontFamily: Fonts.semibold, color: Colors.primary},
 
   /* Empty */
   emptyWrap: {alignItems: 'center', paddingVertical: 60, paddingHorizontal: 32},
@@ -344,8 +344,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 20,
   },
-  emptyTitle: {fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 8},
-  emptyBody: {fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 24},
+  emptyTitle: {fontSize: 18, fontFamily: Fonts.bold, color: Colors.text, marginBottom: 8},
+  emptyBody: {fontFamily: Fonts.regular, fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 24},
   emptyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -355,5 +355,5 @@ const s = StyleSheet.create({
     paddingVertical: 13,
     borderRadius: 12,
   },
-  emptyBtnTxt: {fontSize: 15, fontWeight: '700', color: '#fff'},
+  emptyBtnTxt: {fontSize: 15, fontFamily: Fonts.bold, color: '#fff'},
 });

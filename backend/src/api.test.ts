@@ -19,6 +19,7 @@ if (!/@(localhost|127\.0\.0\.1)(:\d+)?\/.*test/.test(url)) {
 const app = require('./app').default;
 const prisma = require('./prisma').default;
 const {getTrustProxyHops} = require('./helpers');
+const {currentFestival, FESTIVAL_DATES, todayInIndia} = require('./festivals');
 
 let server: Server;
 let base: string;
@@ -682,5 +683,33 @@ describe('account deletion', () => {
     assert.equal(booking.status, 401);
     const favourite = await call('POST', '/favorites/toggle', {token: bob.token, body: {propertyId}});
     assert.equal(favourite.status, 401);
+  });
+});
+
+describe('festive theme', () => {
+  it('names the festival on its days and nothing in between', () => {
+    assert.deepEqual(currentFestival('2026-11-08'), {festival: 'diwali', endsOn: '2026-11-11'});
+    assert.deepEqual(currentFestival('2026-11-12'), {festival: null, endsOn: null});
+  });
+
+  it('lets staff switch a theme on or off without a release', () => {
+    assert.deepEqual(currentFestival('2026-11-08', 'none'), {festival: null, endsOn: null});
+    assert.deepEqual(currentFestival('2026-07-01', 'holi'), {festival: 'holi', endsOn: '2026-07-02'});
+    assert.equal(currentFestival('2026-11-08', 'not-a-festival').festival, 'diwali');
+  });
+
+  it('never has two festivals on one day', () => {
+    const sorted = [...FESTIVAL_DATES].sort((a: any, b: any) => a.from.localeCompare(b.from));
+    sorted.slice(1).forEach((f: any, i: number) => assert.ok(sorted[i].to < f.from, `${sorted[i].id} overlaps ${f.id}`));
+  });
+
+  it('turns over at midnight in India, not in UTC', () => {
+    assert.equal(todayInIndia(new Date('2026-11-04T19:00:00Z')), '2026-11-05');
+  });
+
+  it('answers without signing in', async () => {
+    const res = await call('GET', '/festive');
+    assert.equal(res.status, 200);
+    assert.ok('festival' in res.body);
   });
 });

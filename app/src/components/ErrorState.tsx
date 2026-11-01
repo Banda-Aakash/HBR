@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {Colors, Typography} from '../theme';
+import {Colors, Typography, Fonts} from '../theme';
 
 interface ErrorStateProps {
   message: string;
@@ -21,7 +21,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({message, onRetry}) => (
 
 const s = StyleSheet.create({
   body: {alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, paddingVertical: 48},
-  title: {fontSize: 18, fontWeight: '700', color: Colors.text, marginTop: 16, marginBottom: 8},
+  title: {fontSize: 18, fontFamily: Fonts.bold, color: Colors.text, marginTop: 16, marginBottom: 8},
   message: {
     ...Typography.body,
     color: Colors.textSecondary,
@@ -35,5 +35,5 @@ const s = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: Colors.primary,
   },
-  retryText: {color: Colors.textInverse, fontWeight: '700'},
+  retryText: {color: Colors.textInverse, fontFamily: Fonts.bold},
 });
