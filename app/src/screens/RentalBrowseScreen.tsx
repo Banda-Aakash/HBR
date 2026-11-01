@@ -1,9 +1,10 @@
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useRef} from 'react';
 import {View, Text, StyleSheet, FlatList, TouchableOpacity, Image, TextInput, ActivityIndicator} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {rentalsApi, ApiRental} from '../api/client';
+import {ErrorState} from '../components/ErrorState';
 import {RootStackParamList} from '../types';
 import {Colors, Spacing} from '../theme';
 
@@ -13,27 +14,42 @@ export const RentalBrowseScreen: React.FC = () => {
   const nav = useNavigation<Nav>();
   const [query, setQuery] = useState('');
   const [rentals, setRentals] = useState<ApiRental[]>([]);
+  const [available, setAvailable] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // Answers to an older search are dropped when a newer one has started
+  const latestRequest = useRef(0);
+
+  const load = useCallback(async (nextPage: number) => {
+    const request = ++latestRequest.current;
+    try {
+      const res = await rentalsApi.browseAll({search: query.trim() || undefined, page: nextPage});
+      if (request !== latestRequest.current) {return;}
+      setRentals(prev => (nextPage === 1 ? res.rentals : [...prev, ...res.rentals]));
+      setAvailable(res.available);
+      setPage(nextPage);
+      setHasMore(res.hasMore);
+      setError(null);
+    } catch (e: any) {
+      if (request === latestRequest.current) {
+        setError(e.message || 'Could not load rentals.');
+      }
+    } finally {
+      if (request === latestRequest.current) {
+        setLoading(false);
+      }
+    }
+  }, [query]);
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      rentalsApi.browseAll()
-        .then(res => setRentals(res.rentals))
-        .catch(console.warn)
-        .finally(() => setLoading(false));
-    }, []),
+      load(1);
+    }, [load]),
   );
 
-  const filtered = query.trim()
-    ? rentals.filter(r => {
-        const q = query.toLowerCase();
-        return r.property.address.toLowerCase().includes(q) || r.property.locality.toLowerCase().includes(q) || r.property.city.toLowerCase().includes(q);
-      })
-    : rentals;
-
   const fmtRent = (n: number) => `₹${n.toLocaleString('en-IN')}/mo`;
-  const available = rentals.filter(r => r.state === 'marketing').length;
 
   return (
     <View style={s.container}>
@@ -48,7 +64,10 @@ export const RentalBrowseScreen: React.FC = () => {
       {loading ? (
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}><ActivityIndicator size="large" color={Colors.primary} /></View>
       ) : (
-        <FlatList data={filtered} keyExtractor={i => i.id} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: 20, paddingBottom: 32}}
+        <FlatList data={rentals} keyExtractor={i => i.id} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: 20, paddingBottom: 32}}
+          onEndReached={() => {
+            if (hasMore) {load(page + 1);}
+          }}
           renderItem={({item}) => {
             const avail = item.state === 'marketing';
             return (
@@ -65,7 +84,7 @@ export const RentalBrowseScreen: React.FC = () => {
               </TouchableOpacity>
             );
           }}
-          ListEmptyComponent={<View style={s.empty}><Icon name="search-off" size={44} color={Colors.textLight} /><Text style={s.emptyTxt}>No rentals found</Text></View>}
+          ListEmptyComponent={error ? <ErrorState message={error} onRetry={() => load(1)} /> : <View style={s.empty}><Icon name="search-off" size={44} color={Colors.textLight} /><Text style={s.emptyTxt}>No rentals found</Text></View>}
         />
       )}
     </View>

@@ -149,19 +149,37 @@ export interface ApiProperty {
 }
 
 export const propertiesApi = {
-  list: (params?: {type?: string; city?: string; search?: string; featured?: boolean}) => {
+  list: (params?: {
+    type?: string;
+    city?: string;
+    search?: string;
+    featured?: boolean;
+    minPrice?: number;
+    maxPrice?: number;
+    bedrooms?: number;
+    sort?: string;
+    page?: number;
+  }) => {
     const qs = new URLSearchParams();
     if (params?.type && params.type !== 'all') {qs.set('type', params.type);}
     if (params?.city) {qs.set('city', params.city);}
     if (params?.search) {qs.set('search', params.search);}
     if (params?.featured) {qs.set('featured', 'true');}
+    if (params?.minPrice) {qs.set('minPrice', String(params.minPrice));}
+    if (params?.maxPrice) {qs.set('maxPrice', String(params.maxPrice));}
+    if (params?.bedrooms) {qs.set('bedrooms', String(params.bedrooms));}
+    if (params?.sort) {qs.set('sort', params.sort);}
+    if (params?.page) {qs.set('page', String(params.page));}
     const q = qs.toString();
-    return request<{count: number; properties: ApiProperty[]}>(
+    return request<{count: number; total: number; hasMore: boolean; properties: ApiProperty[]}>(
       `/properties${q ? `?${q}` : ''}`,
     );
   },
 
   getById: (id: string) => request<ApiProperty>(`/properties/${id}`),
+
+  /** Cities that have listings right now */
+  cities: () => request<{cities: string[]}>('/properties/cities'),
 };
 
 // ══════════════════════════════════════
@@ -320,8 +338,15 @@ export const rentalsApi = {
   },
 
   /** All rentals for tenant browsing (no user filter) */
-  browseAll: () =>
-    request<{count: number; rentals: ApiRental[]}>('/rentals/browse/all'),
+  browseAll: (params?: {search?: string; page?: number}) => {
+    const qs = new URLSearchParams();
+    if (params?.search) {qs.set('search', params.search);}
+    if (params?.page) {qs.set('page', String(params.page));}
+    const q = qs.toString();
+    return request<{count: number; total: number; available: number; hasMore: boolean; rentals: ApiRental[]}>(
+      `/rentals/browse/all${q ? `?${q}` : ''}`,
+    );
+  },
 
   getById: (id: string) => request<ApiRental>(`/rentals/${id}`),
 

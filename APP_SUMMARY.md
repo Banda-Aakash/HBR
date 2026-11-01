@@ -33,7 +33,7 @@ A React Native mobile application for real estate — property sales, rental man
 | Tab | What it does |
 |---|---|
 | **Rentals** | Browse available rental properties (marketing + occupied state). Search and filter by city. |
-| **Saved** | Bookmarked properties (placeholder). |
+| **Saved** | Bookmarked properties. |
 | **Profile** | Same as owner, with mode toggle to switch back. |
 
 ---
@@ -50,8 +50,8 @@ A React Native mobile application for real estate — property sales, rental man
 | InteriorsScreen | 3 interior categories (Rental Ready / Moderate / Luxury) |
 | ProfileScreen | User profile, stats, mode toggle, settings |
 | PropertyDetailScreen | Full property details, image gallery, amenities, agent info, book visit |
-| BookingScreen | Date + time picker, notes, confirm booking → WhatsApp |
-| BookingConfirmationScreen | Success screen with booking details |
+| BookingScreen | Date + time picker, notes, request a visit → WhatsApp |
+| BookingConfirmationScreen | Visit request details, pending until the business confirms |
 | BookingsListScreen | Stack version of bookings (accessible from profile) |
 | TenancyDetailScreen | Full rental detail — timeline, parties, financials, documents, inspections, ledger |
 | TransitionScreen | Guard checklist to advance rental state |
@@ -59,7 +59,23 @@ A React Native mobile application for real estate — property sales, rental man
 | InteriorDetailScreen | Sample gallery, features list, price range, WhatsApp enquiry |
 | RentalBrowseScreen | Tenant view — browse available rentals |
 | RentalPropertyDetailScreen | Tenant view of rental details, enquire via WhatsApp |
-| SavedScreen | Placeholder for saved/bookmarked properties |
+| SavedScreen | Saved/bookmarked properties |
+
+---
+
+## Admin Website
+
+Staff use a separate website in its own repo, `HBR_Website`. It lists visit requests to confirm or cancel, and manages listings. Only listings with the status Available show in the app.
+
+The website calls this backend's `/api/admin` routes, so its address must be listed in `ALLOWED_ORIGINS`.
+
+```bash
+# Sign up in the app first, then give that account admin access
+cd backend && npm run build && npm run make-admin -- person@example.com
+
+# Take admin access away
+cd backend && npm run make-admin -- person@example.com --remove
+```
 
 ---
 
@@ -89,10 +105,10 @@ onboarding → marketing → agreement → occupied → notice → move_out → 
 | POST | /api/auth/login | Login |
 | POST | /api/auth/register | Register |
 | GET | /api/auth/me | Current user |
-| GET | /api/properties | List sale properties (with filters) |
+| GET | /api/properties | List sale properties (filters, sort, `page`, `limit`) |
 | GET | /api/properties/:id | Single property |
 | GET | /api/bookings?mode= | User's bookings filtered by mode |
-| POST | /api/bookings | Create booking (with mode) |
+| POST | /api/bookings | Create a pending visit request (with mode) |
 | PATCH | /api/bookings/:id/cancel | Cancel booking |
 | GET | /api/favorites | User's saved properties |
 | POST | /api/favorites/toggle | Add/remove favorite |
@@ -100,12 +116,18 @@ onboarding → marketing → agreement → occupied → notice → move_out → 
 | GET | /api/interiors/:id | Single interior |
 | POST | /api/interiors/:id/like | Toggle like (per-user) |
 | GET | /api/rentals?state= | Owner's rentals (filtered by user) |
-| GET | /api/rentals/browse/all | All rentals for tenant browsing |
+| GET | /api/rentals/browse/all | Rentals for tenant browsing (`search`, `page`, `limit`) |
 | POST | /api/rentals | Create new rental |
 | GET | /api/rentals/:id | Single rental with docs, inspections, ledger |
 | POST | /api/rentals/:id/transition | Advance state (with guard checks) |
 | POST | /api/rentals/:id/documents | Add document to rental |
 | PATCH | /api/rentals/:id | Update rental fields |
+| GET | /api/properties/cities | Cities that have listings |
+| GET | /api/admin/summary | Counts for the admin page (admin only) |
+| GET | /api/admin/bookings | Visit requests (admin only) |
+| PATCH | /api/admin/bookings/:id | Confirm or cancel a visit (admin only) |
+| GET, POST | /api/admin/properties | List or add listings (admin only) |
+| PUT, DELETE | /api/admin/properties/:id | Edit or delete a listing (admin only) |
 
 ---
 
@@ -131,7 +153,7 @@ onboarding → marketing → agreement → occupied → notice → move_out → 
 
 Three touchpoints that open WhatsApp to +91 6281889589:
 
-1. **Book a Visit** — owner confirms booking → pre-filled message with property name, date, time
+1. **Book a Visit** — owner requests a visit → pre-filled message with property name, date, time
 2. **Rental Enquiry** — tenant taps Enquire Now → message with property details, rent, deposit
 3. **Interior Enquiry** — owner taps Enquire on WhatsApp → message with category and budget range
 
@@ -150,6 +172,9 @@ High-End Heritage (Midnight Navy · Alabaster White · Muted Gold · Warm Slate)
 ## How to Run
 
 ```bash
+# Database changes (also run this on every deploy)
+cd backend && npx prisma migrate deploy
+
 # Backend
 cd backend && npx ts-node src/server.ts
 

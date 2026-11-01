@@ -1,11 +1,13 @@
-import React, {useState, useEffect} from 'react';
-import {View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, FlatList, ActivityIndicator} from 'react-native';
+import React, {useState, useEffect, useCallback} from 'react';
+import {View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, FlatList, ActivityIndicator, Alert, Linking} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RouteProp} from '@react-navigation/native';
 import {propertiesApi, favoritesApi, ApiProperty} from '../api/client';
+import {ErrorState} from '../components/ErrorState';
 import {Colors, Spacing} from '../theme';
 import {RootStackParamList} from '../types';
+import {formatPrice} from '../utils/format';
 
 const {width} = Dimensions.get('window');
 type Props = {
@@ -16,14 +18,20 @@ type Props = {
 export const PropertyDetailScreen: React.FC<Props> = ({navigation, route}) => {
   const [property, setProperty] = useState<ApiProperty | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [imgIdx, setImgIdx] = useState(0);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
     propertiesApi.getById(route.params.propertyId)
       .then(p => setProperty(p))
-      .catch(() => {})
+      .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, [route.params.propertyId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const toggleFav = async () => {
     if (!property) {return;}
@@ -34,9 +42,15 @@ export const PropertyDetailScreen: React.FC<Props> = ({navigation, route}) => {
   };
 
   if (loading) {return <View style={s.center}><ActivityIndicator size="large" color={Colors.primary} /></View>;}
-  if (!property) {return <View style={s.center}><Icon name="error-outline" size={44} color={Colors.textLight} /><Text style={s.errTxt}>Property not found</Text></View>;}
+  if (!property) {return <View style={s.center}><ErrorState message={error || 'Property not found'} onRetry={load} /></View>;}
 
-  const fmtPrice = (p: number, u: string) => p >= 1e6 ? `$${(p / 1e6).toFixed(1)}M` : `$${p.toLocaleString()}${u === 'month' ? '/mo' : ''}`;
+  const {agent} = property;
+  // WhatsApp links need a country code, which Indian numbers are often saved without
+  const phoneDigits = agent.phone.replace(/\D/g, '');
+  const whatsappNumber = phoneDigits.length === 10 ? `91${phoneDigits}` : phoneDigits;
+  const contactAgent = (url: string) => {
+    Linking.openURL(url).catch(() => Alert.alert('Could Not Open', `Contact ${agent.name} at ${agent.phone}.`));
+  };
 
   return (
     <View style={s.container}>
@@ -61,7 +75,7 @@ export const PropertyDetailScreen: React.FC<Props> = ({navigation, route}) => {
           <View style={s.typeBadge}><Text style={s.typeTxt}>{property.type.charAt(0).toUpperCase() + property.type.slice(1)}</Text></View>
           <Text style={s.title}>{property.title}</Text>
           <View style={s.locRow}><Icon name="location-on" size={16} color={Colors.primary} /><Text style={s.locTxt}>{property.address}, {property.city}, {property.state}</Text></View>
-          <View style={s.priceRow}><Text style={s.price}>{fmtPrice(property.price, property.priceUnit)}</Text><View style={s.ratingPill}><Icon name="star" size={14} color={Colors.star} /><Text style={s.ratingVal}>{property.rating}</Text><Text style={s.ratingCnt}>({property.reviewCount})</Text></View></View>
+          <View style={s.priceRow}><Text style={s.price}>{formatPrice(property.price, property.priceUnit)}</Text>{property.reviewCount > 0 && <View style={s.ratingPill}><Icon name="star" size={14} color={Colors.star} /><Text style={s.ratingVal}>{property.rating}</Text><Text style={s.ratingCnt}>({property.reviewCount})</Text></View>}</View>
 
           {/* Stats */}
           <View style={s.statsCard}>
@@ -74,15 +88,28 @@ export const PropertyDetailScreen: React.FC<Props> = ({navigation, route}) => {
           <View style={s.sec}><Text style={s.secTitle}>Amenities</Text><View style={s.amenGrid}>{property.amenities.map(a => <View key={a} style={s.amenChip}><Icon name="check-circle" size={15} color={Colors.success} /><Text style={s.amenTxt}>{a}</Text></View>)}</View></View>
 
           {/* Agent */}
-          <View style={s.sec}>
-            <Text style={s.secTitle}>Listed by</Text>
-            <View style={s.agentCard}>
-              <Image source={{uri: property.agent.avatar}} style={s.agentAv} />
-              <View style={{flex: 1, marginLeft: 12}}><Text style={s.agentName}>{property.agent.name}</Text><Text style={s.agentMeta}>{property.agent.propertiesCount} listings · {property.agent.rating} ★</Text></View>
-              <TouchableOpacity style={s.agentBtn}><Icon name="phone" size={18} color={Colors.primary} /></TouchableOpacity>
-              <TouchableOpacity style={s.agentBtn}><Icon name="chat" size={18} color={Colors.primary} /></TouchableOpacity>
+          {agent.name ? (
+            <View style={s.sec}>
+              <Text style={s.secTitle}>Listed by</Text>
+              <View style={s.agentCard}>
+                {agent.avatar ? (
+                  <Image source={{uri: agent.avatar}} style={s.agentAv} />
+                ) : (
+                  <View style={[s.agentAv, s.agentAvEmpty]}><Icon name="person" size={24} color={Colors.textLight} /></View>
+                )}
+                <View style={{flex: 1, marginLeft: 12}}>
+                  <Text style={s.agentName}>{agent.name}</Text>
+                  {agent.rating > 0 && <Text style={s.agentMeta}>{agent.propertiesCount} listings · {agent.rating} ★</Text>}
+                </View>
+                {agent.phone ? (
+                  <>
+                    <TouchableOpacity style={s.agentBtn} onPress={() => contactAgent(`tel:${phoneDigits}`)} accessibilityRole="button" accessibilityLabel={`Call ${agent.name}`}><Icon name="phone" size={18} color={Colors.primary} /></TouchableOpacity>
+                    <TouchableOpacity style={s.agentBtn} onPress={() => contactAgent(`https://wa.me/${whatsappNumber}`)} accessibilityRole="button" accessibilityLabel={`Message ${agent.name} on WhatsApp`}><Icon name="chat" size={18} color={Colors.primary} /></TouchableOpacity>
+                  </>
+                ) : null}
+              </View>
             </View>
-          </View>
+          ) : null}
 
           <View style={s.sec}>
             <Text style={s.secTitle}>Details</Text>
@@ -98,7 +125,7 @@ export const PropertyDetailScreen: React.FC<Props> = ({navigation, route}) => {
 
       {/* Bottom CTA */}
       <View style={s.bottomBar}>
-        <View style={{flex: 1}}><Text style={s.bottomLbl}>Price</Text><Text style={s.bottomPrice}>{fmtPrice(property.price, property.priceUnit)}</Text></View>
+        <View style={{flex: 1}}><Text style={s.bottomLbl}>Price</Text><Text style={s.bottomPrice}>{formatPrice(property.price, property.priceUnit)}</Text></View>
         <TouchableOpacity style={s.bookBtn} activeOpacity={0.85} onPress={() => navigation.navigate('BookingScreen', {propertyId: property.id})}>
           <Icon name="event" size={18} color="#fff" /><Text style={s.bookBtnTxt}>Book a Visit</Text>
         </TouchableOpacity>
@@ -110,7 +137,6 @@ export const PropertyDetailScreen: React.FC<Props> = ({navigation, route}) => {
 const s = StyleSheet.create({
   container: {flex: 1, backgroundColor: Colors.background},
   center: {flex: 1, alignItems: 'center', justifyContent: 'center'},
-  errTxt: {fontSize: 15, color: Colors.textSecondary, marginTop: 10},
   galleryImg: {width, height: 320, backgroundColor: Colors.borderLight},
   backBtn: {position: 'absolute', top: Spacing.xxxl + 8, left: 16, width: 40, height: 40, borderRadius: 14, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 6, elevation: 4},
   topRight: {position: 'absolute', top: Spacing.xxxl + 8, right: 16, flexDirection: 'row', gap: 8},
@@ -144,6 +170,7 @@ const s = StyleSheet.create({
   amenTxt: {fontSize: 13, fontWeight: '500', color: Colors.text},
   agentCard: {flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, padding: 14, shadowColor: '#000', shadowOffset: {width: 0, height: 3}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3},
   agentAv: {width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.borderLight},
+  agentAvEmpty: {alignItems: 'center', justifyContent: 'center'},
   agentName: {fontSize: 15, fontWeight: '700', color: Colors.text},
   agentMeta: {fontSize: 12, color: Colors.textSecondary, marginTop: 2},
   agentBtn: {width: 38, height: 38, borderRadius: 12, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginLeft: 8},

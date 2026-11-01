@@ -6,6 +6,7 @@ import {RouteProp} from '@react-navigation/native';
 import {propertiesApi, ApiProperty} from '../api/client';
 import {Colors} from '../theme';
 import {RootStackParamList} from '../types';
+import {parseDate} from '../utils/format';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'BookingConfirmation'>;
@@ -20,7 +21,7 @@ export const BookingConfirmationScreen: React.FC<Props> = ({navigation, route}) 
     propertiesApi.getById(booking.propertyId).then(setProperty).catch(() => {});
   }, [booking.propertyId]);
 
-  const fmtDate = new Date(booking.date).toLocaleDateString('en-US', {
+  const fmtDate = parseDate(booking.date).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -34,8 +35,8 @@ export const BookingConfirmationScreen: React.FC<Props> = ({navigation, route}) 
         <View style={s.successCircle}>
           <Icon name="check" size={44} color="#fff" />
         </View>
-        <Text style={s.title}>Booking Confirmed!</Text>
-        <Text style={s.sub}>Your visit has been scheduled</Text>
+        <Text style={s.title}>Visit Requested</Text>
+        <Text style={s.sub}>We'll confirm the time with you soon</Text>
 
         {/* Details card */}
         <View style={s.card}>
@@ -43,7 +44,7 @@ export const BookingConfirmationScreen: React.FC<Props> = ({navigation, route}) 
             {icon: 'home', label: 'Property', value: property?.title || 'Unknown'},
             {icon: 'event', label: 'Date', value: fmtDate},
             {icon: 'schedule', label: 'Time', value: booking.time},
-            {icon: 'info', label: 'Status', value: 'Confirmed', color: Colors.success},
+            {icon: 'info', label: 'Status', value: 'Requested', color: Colors.warning},
           ].map((row, i, arr) => (
             <View key={row.label}>
               <View style={s.row}>
@@ -77,7 +78,7 @@ export const BookingConfirmationScreen: React.FC<Props> = ({navigation, route}) 
         </View>
 
         <Text style={s.confId}>
-          Confirmation #{booking.id.slice(-8).toUpperCase()}
+          Request #{booking.id.slice(-8).toUpperCase()}
         </Text>
       </View>
 

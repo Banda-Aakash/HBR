@@ -10,6 +10,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {Property} from '../types';
 import {Colors, Typography, Spacing, BorderRadius} from '../theme';
+import {formatPrice} from '../utils/format';
 
 const {width} = Dimensions.get('window');
 const CARD_WIDTH = width - Spacing.base * 2;
@@ -29,16 +30,6 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 }) => {
   const isFeatured = variant === 'featured';
   const isCompact = variant === 'compact';
-
-  const formatPrice = (price: number, unit: string) => {
-    if (price >= 1000000) {
-      return `$${(price / 1000000).toFixed(1)}M`;
-    }
-    if (price >= 1000) {
-      return `$${(price / 1000).toFixed(0)}K`;
-    }
-    return `$${price.toLocaleString()}${unit === 'month' ? '/mo' : ''}`;
-  };
 
   if (isCompact) {
     return (
@@ -150,9 +141,13 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 
         <View style={styles.bottomRow}>
           <View style={styles.ratingContainer}>
-            <Icon name="star" size={16} color={Colors.star} />
-            <Text style={styles.ratingText}>{property.rating}</Text>
-            <Text style={styles.reviewText}>({property.reviewCount})</Text>
+            {property.reviewCount > 0 && (
+              <>
+                <Icon name="star" size={16} color={Colors.star} />
+                <Text style={styles.ratingText}>{property.rating}</Text>
+                <Text style={styles.reviewText}>({property.reviewCount})</Text>
+              </>
+            )}
           </View>
           <View style={styles.agentInfo}>
             <Image

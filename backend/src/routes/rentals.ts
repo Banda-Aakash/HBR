@@ -1,4 +1,4 @@
-import {cleanNumber, cleanString, getUserId, getQueryParam, getParam, requireAuth} from '../helpers';
+import {cleanNumber, cleanString, getPaging, getUserId, getQueryParam, getParam, requireAuth} from '../helpers';
 import {Router, Request, Response} from 'express';
 import prisma from '../prisma';
 
@@ -82,9 +82,30 @@ function findOwnedRental(req: Request) {
 }
 
 // GET /api/rentals/browse/all — tenant browsing
-router.get('/browse/all', async (_req: Request, res: Response) => {
-  const rentals = await prisma.rental.findMany({where: {rentalState: {in: LISTED_STATES}}});
-  res.json({count: rentals.length, rentals: rentals.map(formatPublicRental)});
+router.get('/browse/all', async (req: Request, res: Response) => {
+  const search = getQueryParam(req, 'search');
+  const {page, limit, skip} = getPaging(req);
+
+  const where: any = {rentalState: {in: LISTED_STATES}};
+  // Public fields only, searching the exact address would reveal where a rental is
+  if (search) {
+    where.OR = [
+      {propLocality: {contains: search, mode: 'insensitive'}},
+      {propCity: {contains: search, mode: 'insensitive'}},
+    ];
+  }
+
+  const [rentals, total, available] = await Promise.all([
+    prisma.rental.findMany({where, orderBy: [{createdAt: 'desc'}, {id: 'asc'}], skip, take: limit}),
+    prisma.rental.count({where}),
+    prisma.rental.count({where: {...where, rentalState: 'marketing'}}),
+  ]);
+
+  res.json({
+    count: rentals.length, total, available, page, limit,
+    hasMore: skip + rentals.length < total,
+    rentals: rentals.map(formatPublicRental),
+  });
 });
 
 router.use(requireAuth);

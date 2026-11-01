@@ -33,7 +33,7 @@ model Property {
   price       Float
   priceUnit   String   // 'month' | 'total'
   type        String   // apartment, house, villa, condo, penthouse
-  status      String   @default("available")
+  status      String   @default("available") // available, booked, sold, hidden. Only available shows in the app
   bedrooms    Int
   bathrooms   Int
   area        Float
@@ -66,6 +66,7 @@ model Property {
   bookings  Booking[]
   favorites Favorite[]
 
+  @@index([status])
   @@map("properties")
 }
 
@@ -77,13 +78,17 @@ model Booking {
   date       String
   time       String
   notes      String   @default("")
-  status     String   @default("confirmed") // confirmed, cancelled, pending
+  status     String   @default("pending")   // pending, confirmed, cancelled
   mode       String   @default("owner")     // owner | tenant
   createdAt  DateTime @default(now())
 
   user     User     @relation(fields: [userId], references: [id])
   property Property @relation(fields: [propertyId], references: [id])
 
+  // A migration also adds bookings_active_slot_key, which stops a user holding
+  // the same slot twice. Prisma can't describe a partial index in this file.
+  @@index([userId])
+  @@index([propertyId])
   @@map("bookings")
 }
 
@@ -98,6 +103,7 @@ model Favorite {
   property Property @relation(fields: [propertyId], references: [id])
 
   @@unique([userId, propertyId])
+  @@index([propertyId])
   @@map("favorites")
 }
 
@@ -129,6 +135,7 @@ model InteriorLike {
   interior Interior @relation(fields: [interiorId], references: [id])
 
   @@unique([userId, interiorId])
+  @@index([interiorId])
   @@map("interior_likes")
 }
 
@@ -181,6 +188,8 @@ model Rental {
   inspections RentalInspection[]
   ledger     LedgerEntry[]
 
+  @@index([userId])
+  @@index([rentalState])
   @@map("rentals")
 }
 
@@ -195,6 +204,7 @@ model RentalDocument {
 
   rental Rental @relation(fields: [rentalId], references: [id])
 
+  @@index([rentalId])
   @@map("rental_documents")
 }
 
@@ -210,6 +220,7 @@ model RentalInspection {
   rental Rental              @relation(fields: [rentalId], references: [id])
   items  RentalInspectionItem[]
 
+  @@index([rentalId])
   @@map("rental_inspections")
 }
 
@@ -222,6 +233,7 @@ model RentalInspectionItem {
 
   inspection RentalInspection @relation(fields: [inspectionId], references: [id])
 
+  @@index([inspectionId])
   @@map("rental_inspection_items")
 }
 
@@ -238,5 +250,6 @@ model LedgerEntry {
 
   rental Rental @relation(fields: [rentalId], references: [id])
 
+  @@index([rentalId])
   @@map("ledger_entries")
 }

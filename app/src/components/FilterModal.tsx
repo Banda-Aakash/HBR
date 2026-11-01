@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {propertiesApi} from '../api/client';
 import {Colors} from '../theme';
 
 const {height: SCREEN_H} = Dimensions.get('window');
@@ -31,17 +32,16 @@ export const DEFAULT_FILTERS: FilterState = {
   sortBy: 'default',
 };
 
-const CITIES = ['New York', 'Miami', 'Austin', 'Charleston', 'Los Angeles', 'San Francisco'];
 const TYPES = ['apartment', 'house', 'villa', 'condo', 'penthouse'];
 const BEDROOMS = [1, 2, 3, 4, 5];
 const PRICE_RANGES = [
   {label: 'Any', min: null, max: null},
-  {label: 'Under $3K/mo', min: null, max: 3000},
-  {label: '$3K–$5K/mo', min: 3000, max: 5000},
-  {label: 'Under $500K', min: null, max: 500000},
-  {label: '$500K–$1M', min: 500000, max: 1000000},
-  {label: '$1M–$3M', min: 1000000, max: 3000000},
-  {label: '$3M+', min: 3000000, max: null},
+  {label: 'Under ₹25K/mo', min: null, max: 25000},
+  {label: '₹25K–₹50K/mo', min: 25000, max: 50000},
+  {label: 'Under ₹50L', min: null, max: 5000000},
+  {label: '₹50L–₹1Cr', min: 5000000, max: 10000000},
+  {label: '₹1Cr–₹3Cr', min: 10000000, max: 30000000},
+  {label: '₹3Cr+', min: 30000000, max: null},
 ];
 const SORT_OPTIONS = [
   {key: 'default' as const, label: 'Default', icon: 'sort'},
@@ -60,10 +60,15 @@ interface Props {
 
 export const FilterModal: React.FC<Props> = ({visible, onClose, filters, onApply}) => {
   const [local, setLocal] = useState<FilterState>(filters);
+  const [cities, setCities] = useState<string[]>([]);
 
   // Reset local state when modal opens
   React.useEffect(() => {
-    if (visible) {setLocal(filters);}
+    if (visible) {
+      setLocal(filters);
+      // The other filters still work if the city list can't be loaded
+      propertiesApi.cities().then(res => setCities(res.cities)).catch(() => {});
+    }
   }, [visible, filters]);
 
   const update = (patch: Partial<FilterState>) =>
@@ -124,7 +129,7 @@ export const FilterModal: React.FC<Props> = ({visible, onClose, filters, onApply
               <Text style={s.sectionTitle}>Location</Text>
               <View style={s.pillGrid}>
                 {renderPill('Any', local.city === null, () => update({city: null}))}
-                {CITIES.map(c =>
+                {cities.map(c =>
                   renderPill(c, local.city === c, () =>
                     update({city: local.city === c ? null : c}),
                   ),

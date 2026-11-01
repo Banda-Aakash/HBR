@@ -1,5 +1,6 @@
 import React, {createContext, useContext, useState, useCallback, useEffect} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Keychain from 'react-native-keychain';
 import {authApi, ApiUser, setAuth, setSessionExpiredHandler} from '../api/client';
 
 interface AuthContextType {
@@ -18,10 +19,24 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const STORAGE_KEY_USER = '@realapp_user';
-const STORAGE_KEY_TOKEN = '@realapp_token';
+// The login token lives in the device's secure storage, not in AsyncStorage
+const TOKEN_SERVICE = 'realapp.auth';
 
 const errorMessage = (e: unknown) =>
   e instanceof Error ? e.message : 'Something went wrong. Please try again.';
+
+/** A failure here only means the user signs in again next time the app opens */
+const storeSession = async (user: ApiUser, token: string) => {
+  try {
+    await Keychain.setGenericPassword(user.id, token, {
+      service: TOKEN_SERVICE,
+      accessible: Keychain.ACCESSIBLE.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
+    });
+    await AsyncStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+  } catch (e) {
+    console.warn('Could not save the session:', e);
+  }
+};
 
 export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) => {
   const [user, setUser] = useState<ApiUser | null>(null);
@@ -30,18 +45,20 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) 
   const logout = useCallback(async () => {
     setUser(null);
     setAuth(null, null);
-    await AsyncStorage.multiRemove([STORAGE_KEY_USER, STORAGE_KEY_TOKEN]);
+    await AsyncStorage.removeItem(STORAGE_KEY_USER);
+    await Keychain.resetGenericPassword({service: TOKEN_SERVICE});
   }, []);
 
   // Restore session on mount
   useEffect(() => {
-    AsyncStorage.multiGet([STORAGE_KEY_USER, STORAGE_KEY_TOKEN]).then(result => {
-      const storedUser = result[0][1];
-      const storedToken = result[1][1];
-      if (storedUser && storedToken) {
+    Promise.all([
+      AsyncStorage.getItem(STORAGE_KEY_USER),
+      Keychain.getGenericPassword({service: TOKEN_SERVICE}),
+    ]).then(([storedUser, credentials]) => {
+      if (storedUser && credentials) {
         const parsed = JSON.parse(storedUser) as ApiUser;
         setUser(parsed);
-        setAuth(parsed.id, storedToken);
+        setAuth(parsed.id, credentials.password);
       }
     }).catch(() => logout());
   }, [logout]);
@@ -57,10 +74,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) 
       const res = await authApi.login(email, password);
       setUser(res.user);
       setAuth(res.user.id, res.token);
-      await AsyncStorage.multiSet([
-        [STORAGE_KEY_USER, JSON.stringify(res.user)],
-        [STORAGE_KEY_TOKEN, res.token],
-      ]);
+      await storeSession(res.user, res.token);
       return null;
     } catch (e) {
       return errorMessage(e);
@@ -76,10 +90,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) 
         const res = await authApi.register(name, email, password);
         setUser(res.user);
         setAuth(res.user.id, res.token);
-        await AsyncStorage.multiSet([
-          [STORAGE_KEY_USER, JSON.stringify(res.user)],
-          [STORAGE_KEY_TOKEN, res.token],
-        ]);
+        await storeSession(res.user, res.token);
         return null;
       } catch (e) {
         return errorMessage(e);

@@ -3,18 +3,20 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
-import {attachUser} from './helpers';
+import {attachUser, getTrustProxyHops} from './helpers';
+import prisma from './prisma';
 import authRoutes from './routes/auth';
 import propertiesRoutes from './routes/properties';
 import bookingsRoutes from './routes/bookings';
 import favoritesRoutes from './routes/favorites';
 import interiorsRoutes from './routes/interiors';
 import rentalsRoutes from './routes/rentals';
+import adminRoutes from './routes/admin';
 
 const app = express();
 
 // Number of proxies in front of the app, so rate limits see the real client IP
-app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 0);
+app.set('trust proxy', getTrustProxyHops());
 
 // ── Middleware ──
 app.use(helmet());
@@ -47,10 +49,18 @@ app.use('/api/bookings', bookingsRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/interiors', interiorsRoutes);
 app.use('/api/rentals', rentalsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ── Health check ──
-app.get('/api/health', (_req, res) => {
-  res.json({status: 'ok', timestamp: new Date().toISOString()});
+app.get('/api/health', async (_req, res) => {
+  const timestamp = new Date().toISOString();
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({status: 'ok', timestamp});
+  } catch (e) {
+    console.error(e);
+    res.status(503).json({status: 'unavailable', timestamp});
+  }
 });
 
 // ── 404 handler ──

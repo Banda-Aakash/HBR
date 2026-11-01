@@ -40,7 +40,7 @@ async function main() {
       password: seedPassword,
       phone: '+1 555-0100',
       avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-      roles: ['buyer', 'owner'],
+      roles: ['buyer', 'owner', 'admin'],
     },
   });
   const u2 = await prisma.user.create({

@@ -13,8 +13,10 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {bookingsApi, ApiBooking} from '../api/client';
+import {ErrorState} from '../components/ErrorState';
 import {Colors, Spacing} from '../theme';
 import {RootStackParamList} from '../types';
+import {parseDate, toDateString} from '../utils/format';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -22,18 +24,20 @@ export const BookingsListScreen: React.FC = () => {
   const nav = useNavigation<Nav>();
   const [bookings, setBookings] = useState<ApiBooking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    bookingsApi
+      .list()
+      .then(res => setBookings(res.bookings))
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   // Refresh every time the screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      bookingsApi
-        .list()
-        .then(res => setBookings(res.bookings))
-        .catch(e => console.warn('Failed to load bookings:', e))
-        .finally(() => setLoading(false));
-    }, []),
-  );
+  useFocusEffect(load);
 
   const handleCancel = (booking: ApiBooking) => {
     Alert.alert(
@@ -62,7 +66,7 @@ export const BookingsListScreen: React.FC = () => {
   };
 
   const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
+    const d = parseDate(dateStr);
     return d.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
@@ -72,7 +76,7 @@ export const BookingsListScreen: React.FC = () => {
 
   const isUpcoming = (b: ApiBooking) => {
     if (b.status === 'cancelled') {return false;}
-    return new Date(b.date) >= new Date(new Date().toISOString().split('T')[0]);
+    return b.date >= toDateString(new Date());
   };
 
   const upcoming = bookings.filter(isUpcoming);
@@ -85,7 +89,7 @@ export const BookingsListScreen: React.FC = () => {
       case 'cancelled':
         return {bg: Colors.errorLight, color: Colors.error, label: 'Cancelled'};
       case 'pending':
-        return {bg: Colors.warningLight, color: Colors.warning, label: 'Pending'};
+        return {bg: Colors.warningLight, color: Colors.warning, label: 'Requested'};
       default:
         return {bg: Colors.borderLight, color: Colors.textSecondary, label: status};
     }
@@ -195,7 +199,9 @@ export const BookingsListScreen: React.FC = () => {
         <View style={{width: 40}} />
       </View>
 
-      {bookings.length === 0 ? (
+      {error ? (
+        <ErrorState message={error} onRetry={load} />
+      ) : bookings.length === 0 ? (
         <View style={s.emptyBody}>
           <View style={s.emptyCircle}>
             <Icon name="event-note" size={44} color={Colors.textLight} />

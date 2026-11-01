@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useCallback} from 'react';
 import {
   View,
   Text,
@@ -14,9 +14,11 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RouteProp} from '@react-navigation/native';
 import {propertiesApi, bookingsApi, ApiProperty} from '../api/client';
+import {ErrorState} from '../components/ErrorState';
 import {useRole} from '../context/RoleContext';
 import {Colors, Spacing} from '../theme';
 import {RootStackParamList, Booking} from '../types';
+import {parseDate, toDateString} from '../utils/format';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'BookingScreen'>;
@@ -35,7 +37,7 @@ const getNext7Days = () => {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     days.push({
-      date: d.toISOString().split('T')[0],
+      date: toDateString(d),
       day: d.toLocaleDateString('en-US', {weekday: 'short'}),
       num: d.getDate(),
       month: d.toLocaleDateString('en-US', {month: 'short'}),
@@ -47,20 +49,32 @@ const getNext7Days = () => {
 export const BookingScreen: React.FC<Props> = ({navigation, route}) => {
   const {mode} = useRole();
   const [property, setProperty] = useState<ApiProperty | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selDate, setSelDate] = useState('');
   const [selTime, setSelTime] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const dates = getNext7Days();
 
-  React.useEffect(() => {
-    propertiesApi.getById(route.params.propertyId).then(setProperty).catch(() => {});
+  const loadProperty = useCallback(() => {
+    setLoadError(null);
+    propertiesApi.getById(route.params.propertyId)
+      .then(setProperty)
+      .catch((e: Error) => setLoadError(e.message));
   }, [route.params.propertyId]);
+
+  React.useEffect(() => {
+    loadProperty();
+  }, [loadProperty]);
 
   if (!property) {
     return (
       <View style={s.errWrap}>
-        <Text style={s.errTxt}>Loading...</Text>
+        {loadError ? (
+          <ErrorState message={loadError} onRetry={loadProperty} />
+        ) : (
+          <Text style={s.errTxt}>Loading...</Text>
+        )}
       </View>
     );
   }
@@ -85,7 +99,7 @@ export const BookingScreen: React.FC<Props> = ({navigation, route}) => {
       };
 
       // Format date for WhatsApp message
-      const fmtDate = new Date(selDate).toLocaleDateString('en-US', {
+      const fmtDate = parseDate(selDate).toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
@@ -94,7 +108,7 @@ export const BookingScreen: React.FC<Props> = ({navigation, route}) => {
 
       // Build WhatsApp message
       const message = [
-        `🏠 *New Booking Confirmed*`,
+        `🏠 *New Visit Request*`,
         ``,
         `*Property:* ${property.title}`,
         `*Location:* ${property.city}, ${property.state}`,
@@ -115,7 +129,10 @@ export const BookingScreen: React.FC<Props> = ({navigation, route}) => {
       // Open WhatsApp after a short delay so navigation completes first
       setTimeout(() => {
         Linking.openURL(whatsappUrl).catch(() => {
-          // WhatsApp not installed — fail silently, booking is already confirmed
+          Alert.alert(
+            'Could Not Open WhatsApp',
+            `Your request is saved, but we haven't been told about it yet. Please contact us at +91 6281889589 and quote request ${res.booking.id.slice(-8).toUpperCase()}.`,
+          );
         });
       }, 500);
     } catch (e: any) {
@@ -207,7 +224,7 @@ export const BookingScreen: React.FC<Props> = ({navigation, route}) => {
           activeOpacity={0.85}>
           <Icon name="check-circle" size={18} color="#fff" />
           <Text style={s.confirmBtnTxt}>
-            {loading ? 'Booking...' : 'Confirm Booking'}
+            {loading ? 'Sending...' : 'Request Visit'}
           </Text>
         </TouchableOpacity>
       </View>

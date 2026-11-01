@@ -1,4 +1,4 @@
-import {cleanString, getUserId, requireAuth, signToken} from '../helpers';
+import {cleanString, getUserId, isUniqueViolation, requireAuth, signToken} from '../helpers';
 import {Router, Request, Response} from 'express';
 import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
@@ -29,16 +29,6 @@ function publicUser<T extends {password: string}>(user: T) {
   return safe;
 }
 
-async function checkPassword(user: {id: string; password: string}, password: string): Promise<boolean> {
-  if (user.password.startsWith('$2')) { return bcrypt.compare(password, user.password); }
-
-  // Accounts from before hashing: verify once, then store a hash instead
-  if (user.password !== password) { return false; }
-  const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-  await prisma.user.update({where: {id: user.id}, data: {password: hash}});
-  return true;
-}
-
 router.post('/login', authLimiter, async (req: Request, res: Response) => {
   const email = cleanString(req.body.email, 254);
   const {password} = req.body;
@@ -53,7 +43,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
     res.status(401).json({error: 'Invalid credentials'});
     return;
   }
-  if (!(await checkPassword(user, password))) {
+  if (!(await bcrypt.compare(password, user.password))) {
     res.status(401).json({error: 'Invalid credentials'});
     return;
   }
@@ -83,17 +73,23 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
   const exists = await prisma.user.findFirst({where: {email: {equals: email, mode: 'insensitive'}}});
   if (exists) { res.status(409).json({error: 'Email already registered'}); return; }
 
-  const user = await prisma.user.create({
-    data: {
-      name, email,
-      password: await bcrypt.hash(password, BCRYPT_ROUNDS),
-      phone: phone || '',
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0F172A&color=fff`,
-      roles: ['buyer'],
-    },
-  });
+  try {
+    const user = await prisma.user.create({
+      data: {
+        name, email,
+        password: await bcrypt.hash(password, BCRYPT_ROUNDS),
+        phone: phone || '',
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0F172A&color=fff`,
+        roles: ['buyer'],
+      },
+    });
 
-  res.status(201).json({token: signToken(user.id), user: publicUser(user)});
+    res.status(201).json({token: signToken(user.id), user: publicUser(user)});
+  } catch (e) {
+    // A repeat tap can pass the check above before the first signup is saved
+    if (!isUniqueViolation(e)) { throw e; }
+    res.status(409).json({error: 'Email already registered'});
+  }
 });
 
 router.get('/me', requireAuth, async (req: Request, res: Response) => {
@@ -112,7 +108,7 @@ router.delete('/me', authLimiter, requireAuth, async (req: Request, res: Respons
   const user = await prisma.user.findUnique({where: {id: userId}});
   if (!user) { res.status(404).json({error: 'User not found'}); return; }
   // 403, not 401: the session is still valid, so the app must not log out
-  if (!(await checkPassword(user, password))) { res.status(403).json({error: 'Incorrect password'}); return; }
+  if (!(await bcrypt.compare(password, user.password))) { res.status(403).json({error: 'Incorrect password'}); return; }
 
   const rentals = await prisma.rental.findMany({where: {userId}, select: {id: true}});
   const rentalIds = rentals.map(r => r.id);

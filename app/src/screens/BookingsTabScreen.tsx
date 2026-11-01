@@ -12,8 +12,10 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useFocusEffect} from '@react-navigation/native';
 import {bookingsApi, ApiBooking} from '../api/client';
+import {ErrorState} from '../components/ErrorState';
 import {useRole} from '../context/RoleContext';
 import {Colors, Spacing} from '../theme';
+import {parseDate, toDateString} from '../utils/format';
 
 const IMG_H = 180;
 
@@ -23,18 +25,20 @@ export const BookingsTabScreen: React.FC = () => {
   const {mode} = useRole();
   const [bookings, setBookings] = useState<ApiBooking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('upcoming');
 
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      bookingsApi
-        .list(mode)
-        .then(res => setBookings(res.bookings))
-        .catch(e => console.warn(e))
-        .finally(() => setLoading(false));
-    }, [mode]),
-  );
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    bookingsApi
+      .list(mode)
+      .then(res => setBookings(res.bookings))
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [mode]);
+
+  useFocusEffect(load);
 
   const handleCancel = (booking: ApiBooking) => {
     Alert.alert(
@@ -61,18 +65,17 @@ export const BookingsTabScreen: React.FC = () => {
   };
 
   const isUpcoming = (b: ApiBooking) =>
-    b.status !== 'cancelled' &&
-    new Date(b.date) >= new Date(new Date().toISOString().split('T')[0]);
+    b.status !== 'cancelled' && b.date >= toDateString(new Date());
 
   const upcoming = bookings.filter(isUpcoming);
   const past = bookings.filter(b => !isUpcoming(b));
   const activeList = tab === 'upcoming' ? upcoming : past;
 
-  const fmtDayNum = (d: string) => new Date(d).getDate().toString();
+  const fmtDayNum = (d: string) => parseDate(d).getDate().toString();
   const fmtMonth = (d: string) =>
-    new Date(d).toLocaleDateString('en-US', {month: 'short'}).toUpperCase();
+    parseDate(d).toLocaleDateString('en-US', {month: 'short'}).toUpperCase();
   const fmtFull = (d: string) =>
-    new Date(d).toLocaleDateString('en-US', {
+    parseDate(d).toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
@@ -85,7 +88,7 @@ export const BookingsTabScreen: React.FC = () => {
       case 'cancelled':
         return {bg: '#FDE8E8', color: '#C81E1E', icon: 'cancel', label: 'Cancelled'};
       case 'pending':
-        return {bg: '#FEF3C7', color: '#92400E', icon: 'hourglass-top', label: 'Pending'};
+        return {bg: '#FEF3C7', color: '#92400E', icon: 'hourglass-top', label: 'Requested'};
       default:
         return {bg: Colors.borderLight, color: Colors.textSecondary, icon: 'info', label: status};
     }
@@ -230,7 +233,9 @@ export const BookingsTabScreen: React.FC = () => {
       </View>
 
       {/* ── List ── */}
-      {activeList.length === 0 ? (
+      {error ? (
+        <ErrorState message={error} onRetry={load} />
+      ) : activeList.length === 0 ? (
         <View style={s.emptyBody}>
           <View style={s.emptyRing}>
             <Icon

@@ -32,27 +32,23 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/:id/like', requireAuth, async (req: Request, res: Response) => {
   const userId = getUserId(req);
+  const interiorId = getParam(req, 'id');
 
-  const interior = await prisma.interior.findUnique({where: {id: getParam(req, 'id')}});
+  const interior = await prisma.interior.findUnique({where: {id: interiorId}});
   if (!interior) { res.status(404).json({error: 'Design not found'}); return; }
 
   const existing = await prisma.interiorLike.findUnique({
-    where: {userId_interiorId: {userId, interiorId: getParam(req, 'id')}},
+    where: {userId_interiorId: {userId, interiorId}},
   });
 
+  // Counts only the rows really changed, so repeat taps can't skew the total
   if (existing) {
-    await prisma.interiorLike.delete({where: {id: existing.id}});
-    const updated = await prisma.interior.update({
-      where: {id: getParam(req, 'id')},
-      data: {likes: {decrement: 1}},
-    });
+    const {count} = await prisma.interiorLike.deleteMany({where: {userId, interiorId}});
+    const updated = await prisma.interior.update({where: {id: interiorId}, data: {likes: {decrement: count}}});
     res.json({...updated, isLiked: false});
   } else {
-    await prisma.interiorLike.create({data: {userId, interiorId: getParam(req, 'id')}});
-    const updated = await prisma.interior.update({
-      where: {id: getParam(req, 'id')},
-      data: {likes: {increment: 1}},
-    });
+    const {count} = await prisma.interiorLike.createMany({data: [{userId, interiorId}], skipDuplicates: true});
+    const updated = await prisma.interior.update({where: {id: interiorId}, data: {likes: {increment: count}}});
     res.json({...updated, isLiked: true});
   }
 });

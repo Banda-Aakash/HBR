@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -10,15 +10,18 @@ import {
   TextInput,
   Dimensions,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useAuth} from '../context/AuthContext';
 import {propertiesApi, favoritesApi, ApiProperty} from '../api/client';
+import {ErrorState} from '../components/ErrorState';
 import {FilterModal, FilterState, DEFAULT_FILTERS} from '../components/FilterModal';
 import {Colors} from '../theme';
 import {RootStackParamList} from '../types';
+import {formatPrice} from '../utils/format';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 const {width} = Dimensions.get('window');
@@ -41,8 +44,14 @@ export const HomeScreen: React.FC = () => {
   const [featured, setFeatured] = useState<ApiProperty[]>([]);
   const [all, setAll] = useState<ApiProperty[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  // Answers to an older search or filter are dropped when a newer one has started
+  const latestRequest = useRef(0);
 
   const activeFilterCount = [
     filters.city,
@@ -52,63 +61,62 @@ export const HomeScreen: React.FC = () => {
     filters.sortBy !== 'default' ? filters.sortBy : null,
   ].filter(Boolean).length;
 
+  const fetchPage = useCallback(
+    (nextPage: number) =>
+      propertiesApi.list({
+        type: filters.type || (activeType !== 'all' ? activeType : undefined),
+        city: filters.city || undefined,
+        search: query || undefined,
+        minPrice: filters.minPrice ?? undefined,
+        maxPrice: filters.maxPrice ?? undefined,
+        bedrooms: filters.bedrooms ?? undefined,
+        sort: filters.sortBy !== 'default' ? filters.sortBy : undefined,
+        page: nextPage,
+      }),
+    [activeType, query, filters],
+  );
+
   const fetchData = useCallback(async () => {
+    const request = ++latestRequest.current;
     try {
       const [featRes, allRes] = await Promise.all([
         propertiesApi.list({featured: true}),
-        propertiesApi.list({
-          type: filters.type || (activeType !== 'all' ? activeType : undefined),
-          city: filters.city || undefined,
-          search: query || undefined,
-        }),
+        fetchPage(1),
       ]);
+      if (request !== latestRequest.current) {return;}
       setFeatured(featRes.properties);
-
-      // Apply client-side filters the API doesn't handle
-      let results = allRes.properties;
-
-      // Price filter
-      if (filters.minPrice) {
-        results = results.filter(p => p.price >= filters.minPrice!);
+      setAll(allRes.properties);
+      setPage(1);
+      setHasMore(allRes.hasMore);
+      setError(null);
+    } catch (e: any) {
+      if (request === latestRequest.current) {
+        setError(e.message || 'Could not load properties.');
       }
-      if (filters.maxPrice) {
-        results = results.filter(p => p.price <= filters.maxPrice!);
-      }
-
-      // Bedrooms filter
-      if (filters.bedrooms) {
-        results = results.filter(p =>
-          filters.bedrooms === 5 ? p.bedrooms >= 5 : p.bedrooms === filters.bedrooms,
-        );
-      }
-
-      // Sort
-      switch (filters.sortBy) {
-        case 'price_low':
-          results.sort((a, b) => a.price - b.price);
-          break;
-        case 'price_high':
-          results.sort((a, b) => b.price - a.price);
-          break;
-        case 'rating':
-          results.sort((a, b) => b.rating - a.rating);
-          break;
-        case 'newest':
-          results.sort((a, b) => b.yearBuilt - a.yearBuilt);
-          break;
-      }
-
-      setAll(results);
-    } catch (e) {
-      console.warn('Failed to fetch properties:', e);
     } finally {
       setLoading(false);
     }
-  }, [activeType, query, filters]);
+  }, [fetchPage]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const loadMore = async () => {
+    const request = latestRequest.current;
+    setLoadingMore(true);
+    try {
+      const res = await fetchPage(page + 1);
+      if (request !== latestRequest.current) {return;}
+      setAll(prev => [...prev, ...res.properties]);
+      setPage(page + 1);
+      setHasMore(res.hasMore);
+    } catch (e: any) {
+      Alert.alert('Could Not Load More', e.message || 'Please try again.');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const toggleFav = async (propertyId: string) => {
     try {
@@ -126,12 +134,6 @@ export const HomeScreen: React.FC = () => {
 
   const goDetail = (p: ApiProperty) =>
     nav.navigate('PropertyDetail', {propertyId: p.id});
-
-  const fmtPrice = (price: number, unit: string) => {
-    if (price >= 1e6) {return `$${(price / 1e6).toFixed(1)}M`;}
-    if (price >= 1e3) {return `$${(price / 1e3).toFixed(0)}K${unit === 'month' ? '/mo' : ''}`;}
-    return `$${price}${unit === 'month' ? '/mo' : ''}`;
-  };
 
   if (loading) {
     return (
@@ -205,51 +207,57 @@ export const HomeScreen: React.FC = () => {
       </ScrollView>
 
       {/* Featured */}
-      <View style={s.secHeader}>
-        <Text style={s.secTitle}>Featured</Text>
-        <TouchableOpacity onPress={() => nav.navigate('PropertyDetail', {propertyId: featured[0]?.id || 'p1'})}>
-          <Text style={s.seeAll}>See all</Text>
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        data={featured}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{paddingLeft: 24, paddingRight: 10}}
-        keyExtractor={i => i.id}
-        snapToInterval={CARD_W + 16}
-        decelerationRate="fast"
-        renderItem={({item}) => (
-          <TouchableOpacity style={s.fCard} onPress={() => goDetail(item)} activeOpacity={0.92}>
-            <Image source={{uri: item.images[0]}} style={s.fImg} />
-            <View style={s.fTopRow}>
-              <View style={s.fBadge}><Text style={s.fBadgeTxt}>Featured</Text></View>
-              <TouchableOpacity style={s.heartBtn} onPress={() => toggleFav(item.id)}>
-                <Icon name={item.isFavorite ? 'favorite' : 'favorite-border'} size={18} color={item.isFavorite ? Colors.heart : '#fff'} />
+      {featured.length > 0 && (
+        <>
+          <View style={s.secHeader}>
+            <Text style={s.secTitle}>Featured</Text>
+            <TouchableOpacity onPress={() => goDetail(featured[0])}>
+              <Text style={s.seeAll}>See all</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={featured}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{paddingLeft: 24, paddingRight: 10}}
+            keyExtractor={i => i.id}
+            snapToInterval={CARD_W + 16}
+            decelerationRate="fast"
+            renderItem={({item}) => (
+              <TouchableOpacity style={s.fCard} onPress={() => goDetail(item)} activeOpacity={0.92}>
+                <Image source={{uri: item.images[0]}} style={s.fImg} />
+                <View style={s.fTopRow}>
+                  <View style={s.fBadge}><Text style={s.fBadgeTxt}>Featured</Text></View>
+                  <TouchableOpacity style={s.heartBtn} onPress={() => toggleFav(item.id)}>
+                    <Icon name={item.isFavorite ? 'favorite' : 'favorite-border'} size={18} color={item.isFavorite ? Colors.heart : '#fff'} />
+                  </TouchableOpacity>
+                </View>
+                <View style={s.fBottom}>
+                  <Text style={s.fPrice}>{formatPrice(item.price, item.priceUnit)}</Text>
+                  <Text style={s.fName} numberOfLines={1}>{item.title}</Text>
+                  <View style={s.fLocRow}>
+                    <Icon name="location-on" size={13} color="rgba(255,255,255,0.7)" />
+                    <Text style={s.fLoc}>{item.city}, {item.state}</Text>
+                  </View>
+                  <View style={s.fStats}>
+                    <View style={s.fStat}><Icon name="king-bed" size={13} color="rgba(255,255,255,0.8)" /><Text style={s.fStatTxt}>{item.bedrooms} Beds</Text></View>
+                    <View style={s.fStat}><Icon name="bathtub" size={13} color="rgba(255,255,255,0.8)" /><Text style={s.fStatTxt}>{item.bathrooms} Baths</Text></View>
+                    <View style={s.fStat}><Icon name="square-foot" size={13} color="rgba(255,255,255,0.8)" /><Text style={s.fStatTxt}>{item.area} sqft</Text></View>
+                  </View>
+                </View>
               </TouchableOpacity>
-            </View>
-            <View style={s.fBottom}>
-              <Text style={s.fPrice}>{fmtPrice(item.price, item.priceUnit)}</Text>
-              <Text style={s.fName} numberOfLines={1}>{item.title}</Text>
-              <View style={s.fLocRow}>
-                <Icon name="location-on" size={13} color="rgba(255,255,255,0.7)" />
-                <Text style={s.fLoc}>{item.city}, {item.state}</Text>
-              </View>
-              <View style={s.fStats}>
-                <View style={s.fStat}><Icon name="king-bed" size={13} color="rgba(255,255,255,0.8)" /><Text style={s.fStatTxt}>{item.bedrooms} Beds</Text></View>
-                <View style={s.fStat}><Icon name="bathtub" size={13} color="rgba(255,255,255,0.8)" /><Text style={s.fStatTxt}>{item.bathrooms} Baths</Text></View>
-                <View style={s.fStat}><Icon name="square-foot" size={13} color="rgba(255,255,255,0.8)" /><Text style={s.fStatTxt}>{item.area} sqft</Text></View>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+            )}
+          />
+        </>
+      )}
 
       {/* Near You */}
       <View style={[s.secHeader, {marginTop: 28}]}>
         <Text style={s.secTitle}>Near You</Text>
       </View>
-      {all.length === 0 ? (
+      {error ? (
+        <ErrorState message={error} onRetry={fetchData} />
+      ) : all.length === 0 ? (
         <View style={s.empty}>
           <Icon name="search-off" size={42} color={Colors.textLight} />
           <Text style={s.emptyTxt}>No properties match your search</Text>
@@ -263,11 +271,13 @@ export const HomeScreen: React.FC = () => {
                 <View style={s.nTypeBadge}>
                   <Text style={s.nTypeTxt}>{item.type.charAt(0).toUpperCase() + item.type.slice(1)}</Text>
                 </View>
-                <View style={s.nRating}>
-                  <Icon name="star" size={14} color={Colors.star} />
-                  <Text style={s.nRatingTxt}>{item.rating}</Text>
-                  <Text style={s.nReviewCnt}>({item.reviewCount})</Text>
-                </View>
+                {item.reviewCount > 0 && (
+                  <View style={s.nRating}>
+                    <Icon name="star" size={14} color={Colors.star} />
+                    <Text style={s.nRatingTxt}>{item.rating}</Text>
+                    <Text style={s.nReviewCnt}>({item.reviewCount})</Text>
+                  </View>
+                )}
               </View>
               <Text style={s.nTitle} numberOfLines={1}>{item.title}</Text>
               <View style={s.nLocRow}>
@@ -276,7 +286,7 @@ export const HomeScreen: React.FC = () => {
               </View>
               <View style={s.nDiv} />
               <View style={s.nBotRow}>
-                <Text style={s.nPrice}>{fmtPrice(item.price, item.priceUnit)}</Text>
+                <Text style={s.nPrice}>{formatPrice(item.price, item.priceUnit)}</Text>
                 <View style={s.nStatRow}>
                   <View style={s.nStatChip}><Text style={s.nStatTxt}>{item.bedrooms} bed</Text></View>
                   <View style={s.nStatChip}><Text style={s.nStatTxt}>{item.bathrooms} bath</Text></View>
@@ -286,6 +296,16 @@ export const HomeScreen: React.FC = () => {
             </View>
           </TouchableOpacity>
         ))
+      )}
+      {!error && hasMore && (
+        <TouchableOpacity
+          style={s.moreBtn}
+          onPress={loadMore}
+          disabled={loadingMore}
+          activeOpacity={0.8}
+          accessibilityRole="button">
+          <Text style={s.moreTxt}>{loadingMore ? 'Loading...' : 'Load More'}</Text>
+        </TouchableOpacity>
       )}
     </ScrollView>
 
@@ -360,4 +380,6 @@ const s = StyleSheet.create({
   nStatTxt: {fontSize: 11, fontWeight: '600', color: Colors.textSecondary},
   empty: {alignItems: 'center', paddingVertical: 48},
   emptyTxt: {fontSize: 15, color: Colors.textSecondary, marginTop: 12},
+  moreBtn: {marginHorizontal: 24, height: 48, borderRadius: 12, borderWidth: 1.5, borderColor: Colors.chipBorder, alignItems: 'center', justifyContent: 'center'},
+  moreTxt: {fontSize: 14, fontWeight: '600', color: Colors.primary},
 });
