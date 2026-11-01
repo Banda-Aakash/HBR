@@ -1,0 +1,343 @@
+/**
+ * API Client — single interface to the Express backend.
+ *
+ * Every screen calls these functions instead of importing mock data.
+ * Auth token and userId are injected via setAuth() after login.
+ *
+ * For the Android emulator, 10.0.2.2 maps to the host machine's localhost.
+ * For iOS simulator, localhost works directly.
+ * Adjust BASE_URL if running on a physical device.
+ */
+import {Platform} from 'react-native';
+
+const HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+const BASE_URL = `http://${HOST}:3001/api`;
+
+let _userId: string | null = null;
+let _token: string | null = null;
+
+export function setAuth(userId: string | null, token: string | null) {
+  _userId = userId;
+  _token = token;
+}
+
+export function getAuthUserId(): string | null {
+  return _userId;
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+  if (_userId) {
+    headers['x-user-id'] = _userId;
+  }
+  if (_token) {
+    headers['Authorization'] = `Bearer ${_token}`;
+  }
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || `Request failed: ${res.status}`);
+  }
+
+  return data as T;
+}
+
+// ══════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════
+
+export interface AuthResponse {
+  token: string;
+  user: ApiUser;
+}
+
+export interface ApiUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string;
+  roles: string[];
+  createdAt: string;
+}
+
+export const authApi = {
+  login: (email: string, password: string) =>
+    request<AuthResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({email, password}),
+    }),
+
+  register: (name: string, email: string, password: string, phone?: string) =>
+    request<AuthResponse>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({name, email, password, phone}),
+    }),
+
+  me: () => request<{user: ApiUser}>('/auth/me'),
+};
+
+// ══════════════════════════════════════
+// PROPERTIES
+// ══════════════════════════════════════
+
+export interface ApiProperty {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  priceUnit: 'month' | 'total';
+  type: string;
+  status: string;
+  bedrooms: number;
+  bathrooms: number;
+  area: number;
+  areaUnit: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  images: string[];
+  amenities: string[];
+  rating: number;
+  reviewCount: number;
+  isFeatured: boolean;
+  isFavorite: boolean;
+  agent: {
+    id: string;
+    name: string;
+    avatar: string;
+    phone: string;
+    email: string;
+    rating: number;
+    propertiesCount: number;
+  };
+  coordinates: {latitude: number; longitude: number};
+  yearBuilt: number;
+  parkingSpaces: number;
+}
+
+export const propertiesApi = {
+  list: (params?: {type?: string; city?: string; search?: string; featured?: boolean}) => {
+    const qs = new URLSearchParams();
+    if (params?.type && params.type !== 'all') {qs.set('type', params.type);}
+    if (params?.city) {qs.set('city', params.city);}
+    if (params?.search) {qs.set('search', params.search);}
+    if (params?.featured) {qs.set('featured', 'true');}
+    const q = qs.toString();
+    return request<{count: number; properties: ApiProperty[]}>(
+      `/properties${q ? `?${q}` : ''}`,
+    );
+  },
+
+  getById: (id: string) => request<ApiProperty>(`/properties/${id}`),
+};
+
+// ══════════════════════════════════════
+// BOOKINGS
+// ══════════════════════════════════════
+
+export interface ApiBooking {
+  id: string;
+  userId: string;
+  propertyId: string;
+  date: string;
+  time: string;
+  notes: string;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  createdAt: string;
+  property?: {id: string; title: string; city: string; image: string};
+}
+
+export const bookingsApi = {
+  list: (mode?: 'owner' | 'tenant') => {
+    const q = mode ? `?mode=${mode}` : '';
+    return request<{count: number; bookings: ApiBooking[]}>(`/bookings${q}`);
+  },
+
+  create: (propertyId: string, date: string, time: string, notes?: string, mode?: string) =>
+    request<{booking: ApiBooking; property: any}>('/bookings', {
+      method: 'POST',
+      body: JSON.stringify({propertyId, date, time, notes, mode}),
+    }),
+
+  cancel: (id: string) =>
+    request<ApiBooking>(`/bookings/${id}/cancel`, {method: 'PATCH'}),
+};
+
+// ══════════════════════════════════════
+// FAVORITES
+// ══════════════════════════════════════
+
+export const favoritesApi = {
+  list: () =>
+    request<{count: number; favorites: string[]; properties: ApiProperty[]}>('/favorites'),
+
+  toggle: (propertyId: string) =>
+    request<{propertyId: string; isFavorite: boolean}>('/favorites/toggle', {
+      method: 'POST',
+      body: JSON.stringify({propertyId}),
+    }),
+};
+
+// ══════════════════════════════════════
+// INTERIORS
+// ══════════════════════════════════════
+
+export interface ApiInterior {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  images: string[];
+  designer: string;
+  style: string;
+  tags: string[];
+  likes: number;
+  isLiked?: boolean;
+}
+
+export const interiorsApi = {
+  list: (category?: string) => {
+    const q = category && category !== 'all' ? `?category=${category}` : '';
+    return request<{count: number; interiors: ApiInterior[]}>(`/interiors${q}`);
+  },
+
+  getById: (id: string) => request<ApiInterior>(`/interiors/${id}`),
+
+  like: (id: string) =>
+    request<ApiInterior>(`/interiors/${id}/like`, {method: 'POST'}),
+};
+
+// ══════════════════════════════════════
+// RENTALS
+// ══════════════════════════════════════
+
+export interface ApiRental {
+  id: string;
+  state: string;
+  rent: number;
+  deposit: number;
+  maintenanceSpendLimit?: number;
+  startDate?: string;
+  endDate?: string;
+  escalationPct?: number;
+  ownerApproval: boolean;
+  depositReceived: boolean;
+  depositSettled: boolean;
+  duesCleared: boolean;
+  createdAt: string;
+  property: {
+    id: string;
+    type: string;
+    unitNo: string;
+    tower?: string;
+    block?: string;
+    floor: number;
+    carpetArea: number;
+    facing?: string;
+    address: string;
+    locality: string;
+    city: string;
+    image: string;
+  };
+  owner: {
+    id: string;
+    name: string;
+    phone: string;
+    email: string;
+    residencyStatus: string;
+    avatar?: string;
+  };
+  tenant?: {
+    id: string;
+    name: string;
+    phone: string;
+    email: string;
+    residencyStatus: string;
+    avatar?: string;
+  };
+  documents: {
+    id: string;
+    type: string;
+    fileName: string;
+    isOnFile: boolean;
+    createdAt: string;
+  }[];
+  inspections: {
+    id: string;
+    type: string;
+    conductedBy: string;
+    conductedAt: string;
+    items: {id: string; room: string; item: string; condition: string}[];
+  }[];
+  ledger: {
+    id: string;
+    date: string;
+    direction: 'in' | 'out';
+    amount: number;
+    category: string;
+    description: string;
+  }[];
+}
+
+export const rentalsApi = {
+  /** My rentals (filtered by logged-in user on backend) */
+  list: (state?: string) => {
+    const q = state && state !== 'all' ? `?state=${state}` : '';
+    return request<{count: number; rentals: ApiRental[]}>(`/rentals${q}`);
+  },
+
+  /** All rentals for tenant browsing (no user filter) */
+  browseAll: () =>
+    request<{count: number; rentals: ApiRental[]}>('/rentals/browse/all'),
+
+  getById: (id: string) => request<ApiRental>(`/rentals/${id}`),
+
+  /** Create a new rental property */
+  create: (data: {
+    address: string;
+    unitNo: string;
+    city: string;
+    rent: number;
+    tower?: string;
+    floor?: number;
+    carpetArea?: number;
+    facing?: string;
+    locality?: string;
+    deposit?: number;
+    maintenanceSpendLimit?: number;
+    type?: string;
+  }) =>
+    request<ApiRental>('/rentals', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  transition: (id: string) =>
+    request<any>(`/rentals/${id}/transition`, {method: 'POST'}),
+
+  addDocument: (id: string, type: string, fileName: string) =>
+    request<any>(`/rentals/${id}/documents`, {
+      method: 'POST',
+      body: JSON.stringify({type, fileName}),
+    }),
+
+  update: (id: string, fields: Record<string, any>) =>
+    request<ApiRental>(`/rentals/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(fields),
+    }),
+};
