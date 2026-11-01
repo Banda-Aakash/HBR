@@ -38,13 +38,13 @@ export const RegisterScreen: React.FC<Props> = ({navigation}) => {
       Alert.alert('Mismatch', 'Passwords do not match.');
       return;
     }
-    if (password.length < 6) {
-      Alert.alert('Weak Password', 'Password must be at least 6 characters.');
+    if (password.length < 8) {
+      Alert.alert('Weak Password', 'Password must be at least 8 characters.');
       return;
     }
-    const success = await register(name, email, password);
-    if (!success) {
-      Alert.alert('Error', 'Registration failed. Please try again.');
+    const error = await register(name.trim(), email.trim(), password);
+    if (error) {
+      Alert.alert('Registration Failed', error);
     }
   };
 
@@ -129,7 +129,7 @@ export const RegisterScreen: React.FC<Props> = ({navigation}) => {
           </View>
           <Text style={styles.title}>Create your account</Text>
           <Text style={styles.subtitle}>
-            Join thousands of property owners and tenants
+            Buy, rent and manage property in one place
           </Text>
         </View>
 
@@ -147,7 +147,7 @@ export const RegisterScreen: React.FC<Props> = ({navigation}) => {
           })}
           {renderField('password', 'Password', password, setPassword, {
             icon: 'lock-outline',
-            placeholder: 'Min. 6 characters',
+            placeholder: 'Min. 8 characters',
             secure: true,
           })}
           {renderField(

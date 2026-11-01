@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
@@ -22,7 +21,6 @@ import {RootStackParamList} from '../types';
 import {Colors, Spacing} from '../theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-const {width} = Dimensions.get('window');
 
 type FilterKey = TenancyState | 'all';
 

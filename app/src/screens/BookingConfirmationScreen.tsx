@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RouteProp} from '@react-navigation/native';
 import {propertiesApi, ApiProperty} from '../api/client';
-import {Colors, Typography} from '../theme';
+import {Colors} from '../theme';
 import {RootStackParamList} from '../types';
 
 type Props = {

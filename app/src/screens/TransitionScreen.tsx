@@ -73,7 +73,6 @@ type Props = {
 export const TransitionScreen: React.FC<Props> = ({navigation, route}) => {
   const [tenancy, setTenancy] = useState<ApiRental | null>(null);
   const [loading, setLoading] = useState(true);
-  const [manualOverrides, setManualOverrides] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     rentalsApi.getById(route.params.tenancyId)

@@ -15,7 +15,7 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RouteProp} from '@react-navigation/native';
 import {propertiesApi, bookingsApi, ApiProperty} from '../api/client';
 import {useRole} from '../context/RoleContext';
-import {Colors, Typography, Spacing} from '../theme';
+import {Colors, Spacing} from '../theme';
 import {RootStackParamList, Booking} from '../types';
 
 type Props = {
@@ -110,7 +110,7 @@ export const BookingScreen: React.FC<Props> = ({navigation, route}) => {
       const whatsappUrl = `https://wa.me/916281889589?text=${encodeURIComponent(message)}`;
 
       // Navigate to confirmation screen
-      navigation.navigate('BookingConfirmation', {booking});
+      navigation.replace('BookingConfirmation', {booking});
 
       // Open WhatsApp after a short delay so navigation completes first
       setTimeout(() => {

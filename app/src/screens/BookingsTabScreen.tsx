@@ -8,7 +8,6 @@ import {
   Image,
   ActivityIndicator,
   Alert,
-  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useFocusEffect} from '@react-navigation/native';
@@ -16,7 +15,6 @@ import {bookingsApi, ApiBooking} from '../api/client';
 import {useRole} from '../context/RoleContext';
 import {Colors, Spacing} from '../theme';
 
-const {width} = Dimensions.get('window');
 const IMG_H = 180;
 
 type Tab = 'upcoming' | 'past';

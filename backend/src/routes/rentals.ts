@@ -1,4 +1,4 @@
-import {getUserId, getQueryParam, getParam} from '../helpers';
+import {cleanNumber, cleanString, getUserId, getQueryParam, getParam, requireAuth} from '../helpers';
 import {Router, Request, Response} from 'express';
 import prisma from '../prisma';
 
@@ -8,6 +8,12 @@ const TRANSITIONS: Record<string, string> = {
   onboarding: 'marketing', marketing: 'agreement', agreement: 'occupied',
   occupied: 'notice', notice: 'move_out', move_out: 'marketing',
 };
+
+// States a rental can be seen in by people other than its owner
+const LISTED_STATES = ['marketing', 'occupied'];
+
+const BOOLEAN_FIELDS = ['ownerApproval', 'depositReceived', 'depositSettled', 'duesCleared'];
+const NUMBER_FIELDS = ['maintenanceSpendLimit', 'rent', 'deposit'];
 
 function formatRental(r: any) {
   return {
@@ -47,36 +53,60 @@ function formatRental(r: any) {
   };
 }
 
+/** What anyone may see: no contact details, documents, money records or exact address */
+function formatPublicRental(r: any) {
+  const blankPerson = {id: '', name: '', phone: '', email: '', residencyStatus: 'resident', avatar: ''};
+  return {
+    id: r.id, state: r.rentalState, rent: r.rent, deposit: r.deposit,
+    maintenanceSpendLimit: 0, ownerApproval: false, depositReceived: false,
+    depositSettled: false, duesCleared: false, createdAt: r.createdAt,
+    property: {
+      id: r.id, type: r.propType, unitNo: '', floor: r.propFloor,
+      carpetArea: r.propCarpetArea, facing: r.propFacing,
+      address: `${r.propLocality}, ${r.propCity}`, locality: r.propLocality,
+      city: r.propCity, image: r.propImage,
+    },
+    owner: blankPerson,
+    documents: [], inspections: [], ledger: [],
+  };
+}
+
 const rentalIncludes = {documents: true, inspections: {include: {items: true}}, ledger: true};
 
-// GET /api/rentals — owner's rentals
-router.get('/', async (req: Request, res: Response) => {
-  const userId = getUserId(req);
-  if (!userId) { res.json({count: 0, rentals: []}); return; }
-
-  const where: any = {userId};
-  const {state} = req.query;
-  if (state && state !== 'all') { where.rentalState = state as string; }
-
-  const rentals = await prisma.rental.findMany({where, include: rentalIncludes, orderBy: {createdAt: 'desc'}});
-  res.json({count: rentals.length, rentals: rentals.map(formatRental)});
-});
+/** Find a rental belonging to the logged-in user */
+function findOwnedRental(req: Request) {
+  return prisma.rental.findFirst({
+    where: {id: getParam(req, 'id'), userId: getUserId(req)},
+    include: rentalIncludes,
+  });
+}
 
 // GET /api/rentals/browse/all — tenant browsing
 router.get('/browse/all', async (_req: Request, res: Response) => {
-  const rentals = await prisma.rental.findMany({
-    where: {rentalState: {in: ['marketing', 'occupied']}},
-    include: rentalIncludes,
-  });
+  const rentals = await prisma.rental.findMany({where: {rentalState: {in: LISTED_STATES}}});
+  res.json({count: rentals.length, rentals: rentals.map(formatPublicRental)});
+});
+
+router.use(requireAuth);
+
+// GET /api/rentals — owner's rentals
+router.get('/', async (req: Request, res: Response) => {
+  const where: any = {userId: getUserId(req)};
+  const state = getQueryParam(req, 'state');
+  if (state && state !== 'all') { where.rentalState = state; }
+
+  const rentals = await prisma.rental.findMany({where, include: rentalIncludes, orderBy: {createdAt: 'desc'}});
   res.json({count: rentals.length, rentals: rentals.map(formatRental)});
 });
 
 // POST /api/rentals — create new rental
 router.post('/', async (req: Request, res: Response) => {
   const userId = getUserId(req);
-  if (!userId) { res.status(401).json({error: 'Not authenticated'}); return; }
-
-  const {address, unitNo, tower, floor, carpetArea, facing, locality, city, rent, deposit, maintenanceSpendLimit, type} = req.body;
+  const {tower, floor, carpetArea, facing, locality, deposit, maintenanceSpendLimit, type} = req.body;
+  const address = cleanString(req.body.address);
+  const unitNo = cleanString(req.body.unitNo, 50);
+  const city = cleanString(req.body.city, 100);
+  const rent = cleanNumber(req.body.rent, 1);
   if (!address || !unitNo || !city || !rent) { res.status(400).json({error: 'address, unitNo, city, rent required'}); return; }
 
   const user = await prisma.user.findUnique({where: {id: userId}});
@@ -84,12 +114,12 @@ router.post('/', async (req: Request, res: Response) => {
 
   const rental = await prisma.rental.create({
     data: {
-      userId, rentalState: 'onboarding', rent: Number(rent),
-      deposit: Number(deposit) || Number(rent) * 6,
-      maintenanceSpendLimit: Number(maintenanceSpendLimit) || 0,
-      propType: type || 'residential', propUnitNo: unitNo, propTower: tower || null,
-      propFloor: Number(floor) || 0, propCarpetArea: Number(carpetArea) || 0,
-      propFacing: facing || null, propAddress: address, propLocality: locality || city,
+      userId, rentalState: 'onboarding', rent,
+      deposit: cleanNumber(deposit) || rent * 6,
+      maintenanceSpendLimit: cleanNumber(maintenanceSpendLimit) || 0,
+      propType: cleanString(type, 50) || 'residential', propUnitNo: unitNo, propTower: cleanString(tower, 50) || null,
+      propFloor: Math.trunc(cleanNumber(floor) || 0), propCarpetArea: cleanNumber(carpetArea) || 0,
+      propFacing: cleanString(facing, 50) || null, propAddress: address, propLocality: cleanString(locality, 100) || city,
       propCity: city, propImage: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800',
       ownerName: user.name, ownerPhone: user.phone, ownerEmail: user.email,
       ownerResidencyStatus: 'resident', ownerAvatar: user.avatar,
@@ -102,14 +132,19 @@ router.post('/', async (req: Request, res: Response) => {
 
 // GET /api/rentals/:id
 router.get('/:id', async (req: Request, res: Response) => {
-  const rental = await prisma.rental.findUnique({where: {id: getParam(req, 'id')}, include: rentalIncludes});
-  if (!rental) { res.status(404).json({error: 'Tenancy not found'}); return; }
-  res.json(formatRental(rental));
+  const owned = await findOwnedRental(req);
+  if (owned) { res.json(formatRental(owned)); return; }
+
+  const listed = await prisma.rental.findFirst({
+    where: {id: getParam(req, 'id'), rentalState: {in: LISTED_STATES}},
+  });
+  if (!listed) { res.status(404).json({error: 'Tenancy not found'}); return; }
+  res.json(formatPublicRental(listed));
 });
 
 // POST /api/rentals/:id/transition
 router.post('/:id/transition', async (req: Request, res: Response) => {
-  const rental = await prisma.rental.findUnique({where: {id: getParam(req, 'id')}, include: rentalIncludes});
+  const rental = await findOwnedRental(req);
   if (!rental) { res.status(404).json({error: 'Tenancy not found'}); return; }
 
   const nextState = TRANSITIONS[rental.rentalState];
@@ -133,10 +168,11 @@ router.post('/:id/transition', async (req: Request, res: Response) => {
 
 // POST /api/rentals/:id/documents
 router.post('/:id/documents', async (req: Request, res: Response) => {
-  const {type, fileName} = req.body;
+  const type = cleanString(req.body.type, 50);
+  const fileName = cleanString(req.body.fileName, 255);
   if (!type || !fileName) { res.status(400).json({error: 'type and fileName required'}); return; }
 
-  const rental = await prisma.rental.findUnique({where: {id: getParam(req, 'id')}});
+  const rental = await findOwnedRental(req);
   if (!rental) { res.status(404).json({error: 'Tenancy not found'}); return; }
 
   const doc = await prisma.rentalDocument.create({
@@ -147,13 +183,20 @@ router.post('/:id/documents', async (req: Request, res: Response) => {
 
 // PATCH /api/rentals/:id
 router.patch('/:id', async (req: Request, res: Response) => {
-  const allowed = ['ownerApproval', 'depositReceived', 'depositSettled', 'duesCleared', 'maintenanceSpendLimit', 'rent', 'deposit'];
   const data: any = {};
-  for (const key of allowed) {
-    if (req.body[key] !== undefined) { data[key] = req.body[key]; }
+  for (const key of BOOLEAN_FIELDS) {
+    if (req.body[key] === undefined) { continue; }
+    if (typeof req.body[key] !== 'boolean') { res.status(400).json({error: `${key} must be true or false`}); return; }
+    data[key] = req.body[key];
+  }
+  for (const key of NUMBER_FIELDS) {
+    if (req.body[key] === undefined) { continue; }
+    const value = cleanNumber(req.body[key]);
+    if (value === undefined) { res.status(400).json({error: `${key} must be a positive number`}); return; }
+    data[key] = value;
   }
 
-  const rental = await prisma.rental.findUnique({where: {id: getParam(req, 'id')}});
+  const rental = await findOwnedRental(req);
   if (!rental) { res.status(404).json({error: 'Tenancy not found'}); return; }
 
   const updated = await prisma.rental.update({where: {id: getParam(req, 'id')}, data, include: rentalIncludes});

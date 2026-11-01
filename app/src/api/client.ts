@@ -3,18 +3,15 @@
  *
  * Every screen calls these functions instead of importing mock data.
  * Auth token and userId are injected via setAuth() after login.
- *
- * For the Android emulator, 10.0.2.2 maps to the host machine's localhost.
- * For iOS simulator, localhost works directly.
- * Adjust BASE_URL if running on a physical device.
+ * The API address is set in src/config.ts.
  */
-import {Platform} from 'react-native';
+import {API_URL} from '../config';
 
-const HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
-const BASE_URL = `http://${HOST}:3001/api`;
+const REQUEST_TIMEOUT_MS = 15000;
 
 let _userId: string | null = null;
 let _token: string | null = null;
+let _onSessionExpired: (() => void) | null = null;
 
 export function setAuth(userId: string | null, token: string | null) {
   _userId = userId;
@@ -25,6 +22,11 @@ export function getAuthUserId(): string | null {
   return _userId;
 }
 
+/** Called when the server rejects the stored token, so the app can log out */
+export function setSessionExpiredHandler(handler: (() => void) | null) {
+  _onSessionExpired = handler;
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -33,20 +35,31 @@ async function request<T>(
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
-  if (_userId) {
-    headers['x-user-id'] = _userId;
-  }
   if (_token) {
     headers['Authorization'] = `Bearer ${_token}`;
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  const data = await res.json();
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+  } catch {
+    throw new Error("Can't reach the server. Check your connection and try again.");
+  } finally {
+    clearTimeout(timeout);
+  }
 
+  const data = await res.json().catch(() => ({}));
+
+  if (res.status === 401 && _token) {
+    _onSessionExpired?.();
+  }
   if (!res.ok) {
     throw new Error(data.error || `Request failed: ${res.status}`);
   }
@@ -87,6 +100,12 @@ export const authApi = {
     }),
 
   me: () => request<{user: ApiUser}>('/auth/me'),
+
+  deleteAccount: (password: string) =>
+    request<void>('/auth/me', {
+      method: 'DELETE',
+      body: JSON.stringify({password}),
+    }),
 };
 
 // ══════════════════════════════════════

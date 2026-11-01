@@ -1,30 +1,32 @@
-import {getUserId, getQueryParam} from '../helpers';
+import {cleanString, getUserId, requireAuth} from '../helpers';
 import {Router, Request, Response} from 'express';
 import prisma from '../prisma';
+import {formatProperty} from './properties';
 
 const router = Router();
 
-router.get('/', async (req: Request, res: Response) => {
-  const userId = getUserId(req);
-  if (!userId) { res.status(401).json({error: 'Not authenticated'}); return; }
+router.use(requireAuth);
 
+router.get('/', async (req: Request, res: Response) => {
   const favs = await prisma.favorite.findMany({
-    where: {userId},
+    where: {userId: getUserId(req)},
     include: {property: true},
+    orderBy: {createdAt: 'desc'},
   });
 
   const favIds = favs.map(f => f.propertyId);
-  const properties = favs.map(f => ({...f.property, isFavorite: true}));
+  const properties = favs.map(f => formatProperty(f.property, favIds));
 
   res.json({count: properties.length, favorites: favIds, properties});
 });
 
 router.post('/toggle', async (req: Request, res: Response) => {
   const userId = getUserId(req);
-  if (!userId) { res.status(401).json({error: 'Not authenticated'}); return; }
-
-  const {propertyId} = req.body;
+  const propertyId = cleanString(req.body.propertyId, 50);
   if (!propertyId) { res.status(400).json({error: 'propertyId required'}); return; }
+
+  const property = await prisma.property.findUnique({where: {id: propertyId}});
+  if (!property) { res.status(404).json({error: 'Property not found'}); return; }
 
   const existing = await prisma.favorite.findUnique({
     where: {userId_propertyId: {userId, propertyId}},

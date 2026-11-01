@@ -1,4 +1,4 @@
-import {getUserId, getQueryParam, getParam} from '../helpers';
+import {getUserId, getQueryParam, getParam, requireAuth} from '../helpers';
 import {Router, Request, Response} from 'express';
 import prisma from '../prisma';
 
@@ -30,9 +30,8 @@ router.get('/:id', async (req: Request, res: Response) => {
   res.json(interior);
 });
 
-router.post('/:id/like', async (req: Request, res: Response) => {
+router.post('/:id/like', requireAuth, async (req: Request, res: Response) => {
   const userId = getUserId(req);
-  if (!userId) { res.status(401).json({error: 'Not authenticated'}); return; }
 
   const interior = await prisma.interior.findUnique({where: {id: getParam(req, 'id')}});
   if (!interior) { res.status(404).json({error: 'Design not found'}); return; }

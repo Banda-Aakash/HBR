@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Dimensions,
   ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -15,7 +14,6 @@ import {Colors, Spacing} from '../theme';
 import {RootStackParamList} from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-const {width} = Dimensions.get('window');
 
 const CATEGORIES = [
   {

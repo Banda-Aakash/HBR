@@ -6,8 +6,9 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
   Alert,
+  Modal,
+  TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
@@ -15,83 +16,31 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useAuth} from '../context/AuthContext';
 import {useRole} from '../context/RoleContext';
 import {favoritesApi, bookingsApi} from '../api/client';
+import {FEATURES} from '../config';
 import {Colors, Typography, Spacing, BorderRadius} from '../theme';
 import {RootStackParamList} from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-const {width} = Dimensions.get('window');
-
 // ── Menu sections with grouped items ──
 const accountItems = [
-  {
-    icon: 'person-outline',
-    label: 'Personal Information',
-    subtitle: 'Name, phone, email',
-    nav: undefined as string | undefined,
-  },
   {
     icon: 'event-note',
     label: 'My Bookings',
     subtitle: 'Upcoming and past visits',
     nav: 'MyBookings' as string | undefined,
   },
-  {
-    icon: 'verified-user',
-    label: 'Identity Verification',
-    subtitle: 'PAN, Aadhaar, documents',
-    nav: undefined as string | undefined,
-  },
-  {
-    icon: 'account-balance-wallet',
-    label: 'Payment Methods',
-    subtitle: 'Bank accounts, UPI',
-    nav: undefined as string | undefined,
-  },
-];
-
-const preferencesItems = [
-  {
-    icon: 'notifications-none',
-    label: 'Notifications',
-    subtitle: 'Push, email, SMS alerts',
-  },
-  {
-    icon: 'language',
-    label: 'Language & Region',
-    subtitle: 'English (India)',
-  },
-  {
-    icon: 'dark-mode',
-    label: 'Appearance',
-    subtitle: 'Light mode',
-  },
-];
-
-const supportItems = [
-  {
-    icon: 'headset-mic',
-    label: 'Help Centre',
-    subtitle: 'FAQs, contact support',
-  },
-  {
-    icon: 'shield',
-    label: 'Privacy & Security',
-    subtitle: 'Data, permissions, 2FA',
-  },
-  {
-    icon: 'description',
-    label: 'Terms & Policies',
-    subtitle: 'Legal documents',
-  },
 ];
 
 export const ProfileScreen: React.FC = () => {
   const nav = useNavigation<Nav>();
-  const {user, logout} = useAuth();
+  const {user, logout, deleteAccount} = useAuth();
   const {isOwner, toggleMode} = useRole();
   const [favCount, setFavCount] = useState(0);
   const [bookingCount, setBookingCount] = useState(0);
+  const [showDelete, setShowDelete] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     favoritesApi.list().then(r => setFavCount(r.count)).catch(() => {});
@@ -103,6 +52,20 @@ export const ProfileScreen: React.FC = () => {
       {text: 'Cancel', style: 'cancel'},
       {text: 'Sign Out', style: 'destructive', onPress: logout},
     ]);
+  };
+
+  const closeDelete = () => {
+    setShowDelete(false);
+    setDeletePassword('');
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const error = await deleteAccount(deletePassword);
+    setDeleting(false);
+    if (error) {
+      Alert.alert('Could Not Delete Account', error);
+    }
   };
 
   const renderMenuItem = (
@@ -144,6 +107,7 @@ export const ProfileScreen: React.FC = () => {
     <ScrollView
       style={styles.container}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.scrollContent}>
       {/* ── Hero header with gradient feel ── */}
       <View style={styles.heroContainer}>
@@ -152,13 +116,6 @@ export const ProfileScreen: React.FC = () => {
           {/* Top bar */}
           <View style={styles.topBar}>
             <Text style={styles.screenTitle}>Profile</Text>
-            <TouchableOpacity
-              style={styles.settingsBtn}
-              accessible
-              accessibilityRole="button"
-              accessibilityLabel="Settings">
-              <Icon name="settings" size={22} color={Colors.textInverse} />
-            </TouchableOpacity>
           </View>
 
           {/* Avatar + Info */}
@@ -172,13 +129,6 @@ export const ProfileScreen: React.FC = () => {
                 }}
                 style={styles.avatar}
               />
-              <TouchableOpacity
-                style={styles.editAvatarBtn}
-                accessible
-                accessibilityRole="button"
-                accessibilityLabel="Change profile photo">
-                <Icon name="camera-alt" size={14} color={Colors.textInverse} />
-              </TouchableOpacity>
             </View>
             <View style={styles.profileInfo}>
               <Text style={styles.userName}>
@@ -187,10 +137,6 @@ export const ProfileScreen: React.FC = () => {
               <Text style={styles.userEmail}>
                 {user?.email || 'guest@example.com'}
               </Text>
-              <View style={styles.verifiedRow}>
-                <Icon name="verified" size={15} color="#34D399" />
-                <Text style={styles.verifiedText}>Verified account</Text>
-              </View>
             </View>
           </View>
         </View>
@@ -210,18 +156,11 @@ export const ProfileScreen: React.FC = () => {
             </Text>
             <Text style={styles.statLabel}>Bookings</Text>
           </View>
-          <View style={styles.statSep} />
-          <View style={styles.statItem}>
-            <View style={styles.ratingRow}>
-              <Text style={styles.statNumber}>4.8</Text>
-              <Icon name="star" size={14} color={Colors.star} />
-            </View>
-            <Text style={styles.statLabel}>Rating</Text>
-          </View>
         </View>
       </View>
 
       {/* ── Mode Switch ── */}
+      {FEATURES.rentals ? (
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Account Type</Text>
         <View style={styles.modeCard}>
@@ -297,11 +236,10 @@ export const ProfileScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
+      ) : null}
 
       {/* ── Menu sections ── */}
       {renderSection('Account', accountItems)}
-      {renderSection('Preferences', preferencesItems)}
-      {renderSection('Support', supportItems)}
 
       {/* ── Sign out ── */}
       <View style={styles.section}>
@@ -315,6 +253,14 @@ export const ProfileScreen: React.FC = () => {
           <Icon name="logout" size={20} color={Colors.error} />
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.deleteLink}
+          onPress={() => setShowDelete(true)}
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel="Delete account">
+          <Text style={styles.deleteLinkText}>Delete Account</Text>
+        </TouchableOpacity>
       </View>
 
       {/* ── Footer ── */}
@@ -323,6 +269,44 @@ export const ProfileScreen: React.FC = () => {
         <View style={styles.footerDot} />
         <Text style={styles.footerText}>Made in India</Text>
       </View>
+
+      {/* ── Delete account ── */}
+      <Modal visible={showDelete} transparent animationType="fade" onRequestClose={closeDelete}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Delete your account?</Text>
+            <Text style={styles.modalBody}>
+              This permanently removes your account, bookings and saved
+              properties. It can't be undone. Enter your password to confirm.
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              value={deletePassword}
+              onChangeText={setDeletePassword}
+              placeholder="Password"
+              placeholderTextColor={Colors.textLight}
+              secureTextEntry
+              accessibilityLabel="Password"
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalBtn}
+                onPress={closeDelete}
+                disabled={deleting}
+                accessibilityRole="button">
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.modalDeleteBtn, (!deletePassword || deleting) && styles.modalBtnDisabled]}
+                onPress={handleDelete}
+                disabled={!deletePassword || deleting}
+                accessibilityRole="button">
+                <Text style={styles.modalDeleteText}>{deleting ? 'Deleting...' : 'Delete'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -366,14 +350,32 @@ const styles = StyleSheet.create({
     ...Typography.h2,
     color: Colors.textInverse,
   },
-  settingsBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
+  deleteLink: {alignItems: 'center', paddingVertical: 14, marginTop: 4},
+  deleteLinkText: {...Typography.small, color: Colors.textSecondary, textDecorationLine: 'underline'},
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15,23,42,0.55)',
     justifyContent: 'center',
+    paddingHorizontal: 24,
   },
+  modalCard: {backgroundColor: Colors.surface, borderRadius: 16, padding: 20},
+  modalTitle: {fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 8},
+  modalBody: {...Typography.body, color: Colors.textSecondary, lineHeight: 21, marginBottom: 14},
+  modalInput: {
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: Colors.text,
+    marginBottom: 16,
+  },
+  modalActions: {flexDirection: 'row', justifyContent: 'flex-end', gap: 8},
+  modalBtn: {paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10},
+  modalBtnDisabled: {opacity: 0.5},
+  modalCancelText: {color: Colors.textSecondary, fontWeight: '600'},
+  modalDeleteBtn: {backgroundColor: Colors.error},
+  modalDeleteText: {color: Colors.textInverse, fontWeight: '700'},
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',

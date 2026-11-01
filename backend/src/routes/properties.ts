@@ -4,7 +4,7 @@ import prisma from '../prisma';
 
 const router = Router();
 
-function formatProperty(p: any, favIds: string[] = []) {
+export function formatProperty(p: any, favIds: string[] = []) {
   return {
     id: p.id, title: p.title, description: p.description,
     price: p.price, priceUnit: p.priceUnit, type: p.type, status: p.status,

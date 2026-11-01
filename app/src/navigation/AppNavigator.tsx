@@ -5,6 +5,7 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useAuth} from '../context/AuthContext';
 import {useRole} from '../context/RoleContext';
+import {FEATURES} from '../config';
 import {Colors, Typography} from '../theme';
 import {
   RootStackParamList,
@@ -77,6 +78,9 @@ const OwnerTabNavigator: React.FC = () => (
           case 'Rentals':
             iconName = 'home-work';
             break;
+          case 'Saved':
+            iconName = 'bookmark';
+            break;
           case 'Interiors':
             iconName = 'palette';
             break;
@@ -108,11 +112,15 @@ const OwnerTabNavigator: React.FC = () => (
       component={BookingsTabScreen}
       options={{tabBarLabel: 'Bookings'}}
     />
-    <OwnerTab.Screen
-      name="Rentals"
-      component={RentalListScreen}
-      options={{tabBarLabel: 'My Rentals'}}
-    />
+    {FEATURES.rentals ? (
+      <OwnerTab.Screen
+        name="Rentals"
+        component={RentalListScreen}
+        options={{tabBarLabel: 'My Rentals'}}
+      />
+    ) : (
+      <OwnerTab.Screen name="Saved" component={SavedScreen} />
+    )}
     <OwnerTab.Screen name="Interiors" component={InteriorsScreen} />
     <OwnerTab.Screen name="Profile" component={ProfileScreen} />
   </OwnerTab.Navigator>

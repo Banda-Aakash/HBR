@@ -1,8 +1,21 @@
 import {PrismaClient} from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+// This script wipes every table, so it only ever runs against a local database
+function assertLocalDatabase() {
+  const url = process.env.DATABASE_URL || '';
+  const isLocal = /@(localhost|127\.0\.0\.1)(:\d+)?\//.test(url);
+  if (process.env.NODE_ENV === 'production' || !isLocal) {
+    throw new Error('Refusing to seed: this would delete all data in a non-local database.');
+  }
+}
+
 async function main() {
+  assertLocalDatabase();
+  const seedPassword = await bcrypt.hash('password123', 10);
+
   // Clear all data
   await prisma.rentalInspectionItem.deleteMany();
   await prisma.rentalInspection.deleteMany();
@@ -24,7 +37,7 @@ async function main() {
       id: 'u1',
       name: 'Alex Johnson',
       email: 'alex@example.com',
-      password: 'password123',
+      password: seedPassword,
       phone: '+1 555-0100',
       avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
       roles: ['buyer', 'owner'],
@@ -35,7 +48,7 @@ async function main() {
       id: 'u2',
       name: 'Sarah Williams',
       email: 'sarah@example.com',
-      password: 'password123',
+      password: seedPassword,
       phone: '+1 555-0200',
       avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
       roles: ['tenant'],

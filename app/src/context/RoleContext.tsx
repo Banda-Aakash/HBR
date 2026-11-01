@@ -1,5 +1,6 @@
 import React, {createContext, useContext, useState, useCallback, useEffect} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {FEATURES} from '../config';
 
 export type UserMode = 'owner' | 'tenant';
 
@@ -42,12 +43,15 @@ export const RoleProvider: React.FC<{children: React.ReactNode}> = ({
     });
   }, []);
 
+  // Tenant mode only offers rentals, so it stays off while they're hidden
+  const activeMode: UserMode = FEATURES.rentals ? mode : 'owner';
+
   return (
     <RoleContext.Provider
       value={{
-        mode,
-        isOwner: mode === 'owner',
-        isTenant: mode === 'tenant',
+        mode: activeMode,
+        isOwner: activeMode === 'owner',
+        isTenant: activeMode === 'tenant',
         toggleMode,
         setMode,
       }}>

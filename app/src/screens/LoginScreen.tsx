@@ -9,15 +9,13 @@ import {
   Platform,
   ScrollView,
   Alert,
-  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useAuth} from '../context/AuthContext';
-import {Colors, Typography, Spacing, BorderRadius} from '../theme';
+import {FEATURES} from '../config';
+import {Colors, Typography} from '../theme';
 import {AuthStackParamList} from '../types';
-
-const {width} = Dimensions.get('window');
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'>;
@@ -35,9 +33,12 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
       Alert.alert('Missing Fields', 'Please enter your email and password.');
       return;
     }
-    const success = await login(email, password);
-    if (!success) {
-      Alert.alert('Login Failed', 'Please check your credentials and try again.');
+    const error = await login(email.trim(), password);
+    if (error) {
+      Alert.alert(
+        'Login Failed',
+        error === 'Invalid credentials' ? 'Please check your email and password.' : error,
+      );
     }
   };
 
@@ -106,9 +107,11 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
           <View style={styles.fieldGroup}>
             <View style={styles.labelRow}>
               <Text style={styles.label}>Password</Text>
-              <TouchableOpacity>
-                <Text style={styles.forgotLink}>Forgot?</Text>
-              </TouchableOpacity>
+              {FEATURES.passwordReset ? (
+                <TouchableOpacity>
+                  <Text style={styles.forgotLink}>Forgot?</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
             <View
               style={[
@@ -172,24 +175,28 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
             )}
           </TouchableOpacity>
 
-          {/* Divider */}
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or continue with</Text>
-            <View style={styles.dividerLine} />
-          </View>
+          {FEATURES.socialLogin ? (
+            <>
+              {/* Divider */}
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or continue with</Text>
+                <View style={styles.dividerLine} />
+              </View>
 
-          {/* Social pills */}
-          <View style={styles.socialRow}>
-            <TouchableOpacity style={styles.socialPill} activeOpacity={0.7}>
-              <Icon name="public" size={20} color="#EA4335" />
-              <Text style={styles.socialPillText}>Google</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialPill} activeOpacity={0.7}>
-              <Icon name="apple" size={20} color="#000" />
-              <Text style={styles.socialPillText}>Apple</Text>
-            </TouchableOpacity>
-          </View>
+              {/* Social pills */}
+              <View style={styles.socialRow}>
+                <TouchableOpacity style={styles.socialPill} activeOpacity={0.7}>
+                  <Icon name="public" size={20} color="#EA4335" />
+                  <Text style={styles.socialPillText}>Google</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialPill} activeOpacity={0.7}>
+                  <Icon name="apple" size={20} color="#000" />
+                  <Text style={styles.socialPillText}>Apple</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : null}
         </View>
 
         {/* ── Footer ── */}

@@ -100,11 +100,12 @@ export type AuthStackParamList = {
   Register: undefined;
 };
 
-// Owner/Investor sees: Home, Bookings, Rentals (my properties), Interiors, Profile
+// Owner/Investor sees: Home, Bookings, Rentals (or Saved while rentals are hidden), Interiors, Profile
 export type OwnerTabParamList = {
   Home: undefined;
   Bookings: undefined;
   Rentals: undefined;
+  Saved: undefined;
   Interiors: undefined;
   Profile: undefined;
 };

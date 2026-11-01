@@ -156,7 +156,6 @@ export const HomeScreen: React.FC = () => {
               source={{uri: user?.avatar || 'https://randomuser.me/api/portraits/men/1.jpg'}}
               style={s.avatar}
             />
-            <View style={s.notifDot} />
           </TouchableOpacity>
         </View>
       </View>
@@ -313,7 +312,6 @@ const s = StyleSheet.create({
   greeting: {fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.7)', marginBottom: 6},
   headline: {fontSize: 26, fontWeight: '800', color: '#fff', lineHeight: 33, letterSpacing: -0.3},
   avatar: {width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: 'rgba(255,255,255,0.35)', backgroundColor: Colors.borderLight},
-  notifDot: {position: 'absolute', top: -1, right: -1, width: 13, height: 13, borderRadius: 7, backgroundColor: Colors.secondary, borderWidth: 2, borderColor: Colors.primary},
   searchSection: {paddingHorizontal: 24, paddingTop: 20, paddingBottom: 8},
   searchBar: {flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, borderRadius: 14, paddingHorizontal: 16, height: 52, gap: 12, shadowColor: Colors.shadowDark, shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.8, shadowRadius: 12, elevation: 5},
   searchInput: {flex: 1, fontSize: 15, color: Colors.text},
