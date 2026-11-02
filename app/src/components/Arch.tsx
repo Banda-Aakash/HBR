@@ -43,14 +43,27 @@ export const ArchIcon: React.FC<{
   </Svg>
 );
 
-export const Logo: React.FC<{width?: number; onDark?: boolean}> = ({width = 38, onDark = false}) => (
-  <Svg width={width} height={width * (700 / 784)} viewBox="120 158 784 700">
-    <Path fill={Colors.gold} d="M512 158 L904 416.7 L904 520.7 L512 262 L120 520.7 L120 416.7 Z" />
-    <Path
-      fill={onDark ? Colors.textInverse : Colors.primary}
-      d="M262 858 L262 467 L386 385.2 L386 516 L638 516 L638 385.2 L762 467 L762 858 L638 858 L638 716 A126 126 0 0 0 386 716 L386 858 Z"
-    />
-  </Svg>
+const SYMBOL_RATIO = 416 / 946;
+const FULL_LOGO_RATIO = 670 / 1133;
+
+/** The house and bridge on their own, for places too small for the name */
+export const Logo: React.FC<{width?: number; onDark?: boolean}> = ({width = 60, onDark = false}) => (
+  <Image
+    source={onDark ? require('../assets/logo-symbol-on-dark.png') : require('../assets/logo-symbol.png')}
+    style={{width, height: width * SYMBOL_RATIO}}
+    accessibilityIgnoresInvertColors
+  />
+);
+
+/** The stacked logo with the name, for dark backgrounds */
+export const FullLogo: React.FC<{width: number}> = ({width}) => (
+  <Image
+    source={require('../assets/logo-full-on-dark.png')}
+    style={{width, height: width * FULL_LOGO_RATIO}}
+    accessibilityRole="image"
+    accessibilityLabel="HomeBridge Reality"
+    accessibilityIgnoresInvertColors
+  />
 );
 
 /** The app's signature shape: a photo with a round top and a nearly square foot */

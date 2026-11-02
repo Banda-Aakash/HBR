@@ -1,4 +1,4 @@
-# HomeBridgeReality — Current State Summary
+# HomeBridge Reality — Current State Summary
 
 ## Overview
 A React Native mobile application for real estate — property sales, rental management, and interior design services. Two user modes (Owner/Buyer and Tenant/Renter) with a toggle switch in the profile, backed by a PostgreSQL database via Express + Prisma API.
@@ -161,7 +161,7 @@ Three touchpoints that open WhatsApp to +91 6281889589:
 
 ## Logo
 
-The logo is an H made of two pillars and an arched bridge, under a roof. The master files are in `brand/`.
+The logo is a house with a suspension bridge across it, the same one the marketing website uses. It comes as a stacked logo with the name, and as a house-and-bridge symbol for small sizes. The master files are in `brand/`. They are PNGs, so print work will need a vector version.
 
 ---
 

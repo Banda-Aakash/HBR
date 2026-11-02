@@ -17,22 +17,13 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchLogo" translatesAutoresizingMaskIntoConstraints="NO" id="Lgo-Im-Vw1">
-                                <rect key="frame" x="127.5" y="240" width="120" height="107"/>
+                                <rect key="frame" x="67.5" y="262" width="240" height="142"/>
                             </imageView>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="HomeBridgeReality" textAlignment="center" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" minimumFontSize="18" translatesAutoresizingMaskIntoConstraints="NO" id="GJd-Yh-RWb">
-                                <rect key="frame" x="0.0" y="367" width="375" height="36"/>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="30"/>
-                                <color key="textColor" red="0.97254901960784312" green="0.98039215686274506" blue="0.9882352941176471" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                         </subviews>
                         <color key="backgroundColor" red="0.058823529411764705" green="0.090196078431372548" blue="0.16470588235294117" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="Bcu-3y-fUS" firstAttribute="centerX" secondItem="GJd-Yh-RWb" secondAttribute="centerX" id="Q3B-4B-g5h"/>
-                            <constraint firstItem="GJd-Yh-RWb" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" symbolic="YES" id="x7j-FC-K8j"/>
                             <constraint firstItem="Lgo-Im-Vw1" firstAttribute="centerX" secondItem="Bcu-3y-fUS" secondAttribute="centerX" id="Lgo-cX-001"/>
-                            <constraint firstItem="Lgo-Im-Vw1" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-40" id="Lgo-cY-002"/>
-                            <constraint firstItem="GJd-Yh-RWb" firstAttribute="top" secondItem="Lgo-Im-Vw1" secondAttribute="bottom" constant="20" id="Lgo-tp-003"/>
+                            <constraint firstItem="Lgo-Im-Vw1" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="Lgo-cY-002"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
                     </view>
@@ -43,6 +34,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="LaunchLogo" width="120" height="107"/>
+        <image name="LaunchLogo" width="240" height="142"/>
     </resources>
 </document>

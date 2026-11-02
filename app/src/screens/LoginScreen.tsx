@@ -14,7 +14,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {FestiveScene, FestiveStrip, Logo, useStripHeight} from '../components/Arch';
+import {FestiveScene, FestiveStrip, FullLogo, useStripHeight} from '../components/Arch';
 import {Button} from '../components/Button';
 import {useAuth} from '../context/AuthContext';
 import {useTheme} from '../context/ThemeContext';
@@ -53,12 +53,13 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
   return (
     <KeyboardAvoidingView
       style={[styles.container, {backgroundColor: theme.soft}]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      behavior={Platform.OS === 'ios' ? undefined : 'height'}>
       <StatusBar barStyle="light-content" />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets>
         {/* ── Brand hero ── */}
         <View
           style={[
@@ -69,8 +70,7 @@ export const LoginScreen: React.FC<Props> = ({navigation}) => {
             },
           ]}>
           {theme.festival ? <FestiveStrip festival={theme.festival} /> : null}
-          <Logo width={72} onDark />
-          <Text style={styles.brand}>HomeBridgeReality</Text>
+          <FullLogo width={230} />
           <Text style={styles.tagline}>
             {theme.wish || 'Your complete real estate companion'}
           </Text>
@@ -221,15 +221,8 @@ const styles = StyleSheet.create({
 
   // Hero
   hero: {alignItems: 'center', paddingBottom: 20, overflow: 'hidden'},
-  brand: {
-    marginTop: 8,
-    fontFamily: Fonts.heavy,
-    fontSize: 27,
-    letterSpacing: -0.5,
-    color: Colors.textInverse,
-  },
   tagline: {
-    marginTop: 2,
+    marginTop: 6,
     fontFamily: Fonts.semibold,
     fontSize: 16,
     color: Colors.textInverse,

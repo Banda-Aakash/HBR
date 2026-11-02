@@ -232,7 +232,7 @@ export const ProfileScreen: React.FC = () => {
 
       {/* ── Footer ── */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>HomeBridgeReality v1.0.0</Text>
+        <Text style={styles.footerText}>HomeBridge Reality v1.0.0</Text>
         <View style={styles.footerDot} />
         <Text style={styles.footerText}>Made in India</Text>
       </View>

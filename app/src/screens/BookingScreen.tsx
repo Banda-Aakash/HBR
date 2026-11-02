@@ -170,7 +170,7 @@ export const BookingScreen: React.FC<Props> = ({navigation, route}) => {
         </View>
       )}
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {/* Property summary */}
         <View style={s.summary}>
           <ArchImage uri={property.images[0]} width={66} height={74} footRadius={8} />
